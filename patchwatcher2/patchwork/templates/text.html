@@ -15,29 +15,32 @@
             function changegroup( osel, link, group ) {
                 var table = $('#sortable-table').DataTable();
                 var newgroup = osel.options[osel.selectedIndex].text;
-                var r = alertify.confirm('Update group from '+group+' to '+newgroup+' ?', function () {
-                    $.post(
-                        "updategroup",
-                        {
-                            'csrfmiddlewaretoken': '{{ csrf_token }}',
-                            'link': link,
-                            'newgroup': newgroup,
-                            'oldgroup': group,
-                        },
-                        function ( response ) {
-                            if (response.ret == 0) {
-                                alertify.alert("Updated success");
-                                table.ajax.reload();
+                var r = alertify.confirm('Update group from '+group+' to '+newgroup+' ?', function (e) {
+                    if (e) {
+                        $.post(
+                            "updategroup",
+                            {
+                                'csrfmiddlewaretoken': '{{ csrf_token }}',
+                                'link': link,
+                                'newgroup': newgroup,
+                                'oldgroup': group,
+                            },
+                            function ( response ) {
+                                if (response.ret == 0) {
+                                    alertify.alert("Updated success");
+                                    table.ajax.reload();
+                                }
+                                else {
+                                    alertify.alert("Updated failed: group already been updated");
+                                    table.ajax.reload();
+                                }
                             }
-                            else {
-                                alertify.alert("Updated failed: group already been updated");
-                                table.ajax.reload();
-                            }
-                        }
-                    );
-                },function () {
-                    return
-                });
+                        );
+                    }
+                    else {
+                        return
+                    }
+                } );
             }
             function changetestcase( link, testcase ) {
                 var table = $('#sortable-table').DataTable();
@@ -94,28 +97,31 @@
             function changestate( osel, link, state ) {
                 var table = $('#sortable-table').DataTable();
                 var newstate = osel.options[osel.selectedIndex].text;
-                var r = alertify.confirm('Update group from '+state+' to '+newstate+' ?', function () {
-                    $.post(
-                        "updatestate",
-                        {
-                            'csrfmiddlewaretoken': '{{ csrf_token }}',
-                            'link': link,
-                            'newstate': newstate,
-                            'oldstate': state,
-                        },
-                        function ( response ) {
-                            if (response.ret == 0) {
-                                alertify.alert("Updated success");
-                                table.ajax.reload();
+                var r = alertify.confirm('Update group from '+state+' to '+newstate+' ?', function (e) {
+                    if (e) {
+                        $.post(
+                            "updatestate",
+                            {
+                                'csrfmiddlewaretoken': '{{ csrf_token }}',
+                                'link': link,
+                                'newstate': newstate,
+                                'oldstate': state,
+                            },
+                            function ( response ) {
+                                if (response.ret == 0) {
+                                    alertify.alert("Updated success");
+                                    table.ajax.reload();
+                                }
+                                else {
+                                    alertify.alert("Updated failed: state already been updated");
+                                    table.ajax.reload();
+                                }
                             }
-                            else {
-                                alertify.alert("Updated failed: state already been updated");
-                                table.ajax.reload();
-                            }
-                        }
-                    );
-                },function () {
-                    return
+                        );
+                    }
+                    else {
+                        return
+                    }
                 });
             }
             function format ( row ) {
@@ -127,7 +133,6 @@
                 var action4 = ''
                 action += '<select name="group" onChange="changegroup(this, \''+d.patchlink+'\', \''+d.group+'\')">'
                 action +=   '<option'
-                console.log(d.group)
                 if (d.group == "group1") {
                     action += ' selected="selected"';
                 }

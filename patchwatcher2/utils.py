@@ -4,9 +4,18 @@ import glob
 import lxml.etree as etree
 import random
 import subprocess
+from subprocess import STDOUT
 import re
 import cPickle as pickle
 import os
+import logging
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
+                    datefmt='%a, %d %b %Y %H:%M:%S',
+                    filename='patchwatcher.log',
+                    filemode='w')
+
 
 group1 = ['src/storage/','src/qemu/qemu_blockjob.c']
 group2 = ['src/network/','src/cpu/','src/interface/', 'src/node_device/','src/nwfilter/','src/util/virnuma.c',]
@@ -27,6 +36,11 @@ MONTH = {'12':'December',
          '2':'February',
          '1':'January',
          }
+
+def bakdb():
+    cmd = "cp -f db.sqlite3 ./dbbak/"
+    output = subprocess.check_output(cmd.split(),stderr=STDOUT)
+    logging.debug("run cmd: %s" % cmd)
 
 def cleansubject(subject):
     if "PATCH" not in subject:
@@ -71,8 +85,9 @@ def getmaildata(link, timeout=None):
     else:
         cmd = 'wget %s -O %s' % (link, tmpfile)
 
+    logging.debug("run cmd: %s" % cmd)
     try:
-        subprocess.check_output(cmd.split())
+        output = subprocess.check_output(cmd.split(),stderr=STDOUT)
     except:
         if timeout is not None:
             if timeout > 600:
@@ -114,9 +129,11 @@ def parsehtmlpatch(htmlstr):
         subject = subject.replace('\t', ' ')
     msg = ''
     if pre.getchildren() == []:
-        msg += pre.text
+        if pre.text:
+            msg += pre.text
     else:
-        msg += pre.text
+        if pre.text:
+            msg += pre.text
         for n in pre.getchildren():
             msg += n.tail
 
@@ -191,7 +208,7 @@ def getinfo(msg, detail=None, subpatch=None):
 
 def manualsplit(msg):
     detail = {}
-    getinfo(msg, detail)
+    getinfo(msg, detail=detail)
     if detail == {}:
         return
 
@@ -202,7 +219,6 @@ def manualsplit(msg):
             maxchange[1] = n
 
     if maxchange[1] == None:
-        print detail
         return
 
     for n in group1:
@@ -217,23 +233,14 @@ def manualsplit(msg):
 
 def manualfilter(msg):
     detail = {}
-    getinfo(msg, detail)
+    getinfo(msg, detail=detail)
     if detail == {}:
         return False
 
-    maxchange = [0, None]
-    for n in detail.keys():
-        if maxchange[0] < detail[n]:
-            maxchange[0] = detail[n]
-            maxchange[1] = n
-
-    if maxchange[1] == None:
-        print detail
-        return False
-
     for n in notsupport:
-        if n in maxchange[1]:
-            return True
+        for m in detail.keys():
+            if n in m:
+                return True
 
     return False
 

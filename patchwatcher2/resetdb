@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+rm -rf patchwork/migrations db.sqlite3
+
+python2 ./manage.py makemigrations patchwork
+python2 ./manage.py migrate

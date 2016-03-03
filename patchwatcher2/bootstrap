@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+#rm -rf caselink/migrations db.sqlite3
+
+pkill -f patchwatcher.py
+python2 patchwatcher.py &
+python2 ./manage.py runserver 0.0.0.0:8888

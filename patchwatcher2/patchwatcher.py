@@ -7,6 +7,14 @@ django.setup()
 
 import time
 import lxml.etree as etree
+import logging
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
+                    datefmt='%a, %d %b %Y %H:%M:%S',
+                    filename='patchwatcher.log',
+                    filemode='w')
+
 from splitpatch import splitpatchinternal
 from utils import *
 from patchwork.models import *
@@ -39,7 +47,11 @@ def updatepatchinfo(groupinfo, patchset, patchlink):
         if n not in patchlink.keys():
             raise ValueError, 'cannot find % link' % n
 
-        group = 'group%s' % groupinfo[n][1]
+        if int(groupinfo[n][1]) < 4:
+            group = 'group%s' % groupinfo[n][1]
+        else:
+            group = 'others'
+
         Dataset.objects.create(name=n, desc=patchlink[n][1],
                                 group=group, patchlink=patchlink[n][0],
                                 author=patchlink[n][2],date=patchlink[n][3],
@@ -118,22 +130,28 @@ def getmailwithdate(maillist, start, end):
     return result, patchset, patchlink
 
 def patchwatcher():
-    start = ['2016-3', '00044']
+    start = ['2016-3', '00000']
     end = []
+    count = 0
 
     while 1:
+        count += 1
+        if count%60 == 0:
+            logging.info("backups db")
+            bakdb()
+
         if loaddateinfo():
             start = loaddateinfo()
 
         try:
             groupinfo, patchset, patchlink = getmailwithdate(LIBVIR_LIST, start, end)
         except TypeError:
-            time.sleep(10)
+            time.sleep(60)
             continue
 
-        print "update %d patches" % len(groupinfo)
+        logging.info("update %d patches" % len(groupinfo))
         updatepatchinfo(groupinfo, patchset, patchlink)
-        time.sleep(10)
+        time.sleep(60)
 
 if __name__ == '__main__':
     patchwatcher()
