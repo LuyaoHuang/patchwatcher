@@ -1,0 +1,328 @@
+{% load staticfiles %}
+<html>
+    <head>
+        <title>libvirt upstream patch list</title>
+        <script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
+        <script src="https://cdn.datatables.net/1.10.11/js/jquery.dataTables.min.js"></script>
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.10.11/css/jquery.dataTables.min.css"/>
+        <link rel="stylesheet" type="text/css" href="{% static "web.css" %}"/>
+       	<link rel="stylesheet" href="http://fabien-d.github.io/alertify.js/assets/js/lib/alertify/alertify.core.css" />
+        <link rel="stylesheet" href="http://fabien-d.github.io/alertify.js/assets/js/lib/alertify/alertify.default.css" id="toggleCSS" />
+		<script src="http://fabien-d.github.io/alertify.js/assets/js/lib/alertify/alertify.min.js"></script>
+    </head>
+    <body>
+        <script>
+            function changegroup( osel, link, group ) {
+                var table = $('#sortable-table').DataTable();
+                var newgroup = osel.options[osel.selectedIndex].text;
+                var r = alertify.confirm('Update group from '+group+' to '+newgroup+' ?', function () {
+                    $.post(
+                        "updategroup",
+                        {
+                            'csrfmiddlewaretoken': '{{ csrf_token }}',
+                            'link': link,
+                            'newgroup': newgroup,
+                            'oldgroup': group,
+                        },
+                        function ( response ) {
+                            if (response.ret == 0) {
+                                alertify.alert("Updated success");
+                                table.ajax.reload();
+                            }
+                            else {
+                                alertify.alert("Updated failed: group already been updated");
+                                table.ajax.reload();
+                            }
+                        }
+                    );
+                },function () {
+                    return
+                });
+            }
+            function changetestcase( link, testcase ) {
+                var table = $('#sortable-table').DataTable();
+                alertify.prompt('Link:',function(evt, value) {
+                    if (evt) {
+                        $.post(
+                            "updatetestcase",
+                            {
+                                'csrfmiddlewaretoken': '{{ csrf_token }}',
+                                'link': link,
+                                'newtestcase': value,
+                                'oldtestcase': testcase,
+                            },
+                            function ( response ) {
+                                if (response.ret == 0) {
+                                    alertify.alert("Updated success");
+                                    table.ajax.reload();
+                                }
+                                else {
+                                    alertify.alert("Updated failed: testcase already been updated");
+                                    table.ajax.reload();
+                                }
+                            }
+                        );
+                    }
+                }, ''+testcase+'');
+            }
+            function changetestby( link, testby ) {
+                var table = $('#sortable-table').DataTable();
+                alertify.prompt('Test by:', function(evt, value) {
+                    if (evt) {
+                        $.post(
+                            "updatetestby",
+                            {
+                                'csrfmiddlewaretoken': '{{ csrf_token }}',
+                                'link': link,
+                                'newtestby': value,
+                                'oldtestby': testby,
+                            },
+                            function ( response ) {
+                                if (response.ret == 0) {
+                                    alertify.alert("Updated success");
+                                    table.ajax.reload();
+                                }
+                                else {
+                                    alertify.alert("Updated failed: testby already been updated");
+                                    table.ajax.reload();
+                                }
+                            }
+                        );
+                    }
+                }, ''+testby+'');
+            }
+            function changestate( osel, link, state ) {
+                var table = $('#sortable-table').DataTable();
+                var newstate = osel.options[osel.selectedIndex].text;
+                var r = alertify.confirm('Update group from '+state+' to '+newstate+' ?', function () {
+                    $.post(
+                        "updatestate",
+                        {
+                            'csrfmiddlewaretoken': '{{ csrf_token }}',
+                            'link': link,
+                            'newstate': newstate,
+                            'oldstate': state,
+                        },
+                        function ( response ) {
+                            if (response.ret == 0) {
+                                alertify.alert("Updated success");
+                                table.ajax.reload();
+                            }
+                            else {
+                                alertify.alert("Updated failed: state already been updated");
+                                table.ajax.reload();
+                            }
+                        }
+                    );
+                },function () {
+                    return
+                });
+            }
+            function format ( row ) {
+                d = row.data()
+                // `d` is the original data object for the row
+                var action = ''
+                var action2 = ''
+                var action3 = ''
+                var action4 = ''
+                action += '<select name="group" onChange="changegroup(this, \''+d.patchlink+'\', \''+d.group+'\')">'
+                action +=   '<option'
+                console.log(d.group)
+                if (d.group == "group1") {
+                    action += ' selected="selected"';
+                }
+                action +=   ' value="group1">group1</option>'
+                action +=   '<option'
+                if (d.group == "group2") {
+                    action += ' selected="selected"';
+                }
+                action +=   ' value="group2">group2</option>'
+                action +=   '<option'
+                if (d.group == "group3") {
+                    action += ' selected="selected"';
+                }
+                action +=   ' value="group3">group3</option>'
+                action +=   '<option'
+                if (d.group == "others") {
+                    action += ' selected="selected"';
+                }
+                action +=   ' value="others">others</option>'
+                action +='</select>'
+                action2 +='<a href="'+d.testcase+'">'+d.testcase+'</a>'
+                action2 +=' <button type="button" onclick="changetestcase(\''+d.patchlink+'\', \''+d.testcase+'\')">Update</button>'
+                action3 +=''+d.testby+''
+                action3 +=' <button type="button" onclick="changetestby(\''+d.patchlink+'\', \''+d.testby+'\')">Update</button>'
+                action4 += '<select name="state" onChange="changestate(this, \''+d.patchlink+'\', \''+d.state+'\')">'
+                action4 +=   '<option'
+                if (d.state == "ToDo") {
+                    action4 += ' selected="selected"';
+                }
+                action4 +=   ' value="ToDo">ToDo</option>'
+                action4 +=   '<option'
+                if (d.state == "Pass") {
+                    action4 += ' selected="selected"';
+                }
+                action4 +=   ' value="Pass">Pass</option>'
+                action4 +=   '<option'
+                if (d.state == "NACK") {
+                    action4 += ' selected="selected"';
+                }
+                action4 +=   ' value="NACK">NACK</option>'
+                action4 +=   '<option'
+                if (d.state == "Fail") {
+                    action4 += ' selected="selected"';
+                }
+                action4 +=   ' value="Fail">Fail</option>'
+                action4 +='</select>'
+                return '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
+                    '<tr>'+
+                        '<td>name:</td>'+
+                        '<td>'+d.name+'</td>'+
+                    '</tr>'+
+                    '<tr>'+
+                        '<td>date:</td>'+
+                        '<td>'+d.date+'</td>'+
+                    '</tr>'+
+                    '<tr>'+
+                        '<td>author:</td>'+
+                        '<td>'+d.author+'</td>'+
+                    '</tr>'+
+                    '<tr>'+
+                        '<td>desc:</td>'+
+                        '<td><pre>'+d.desc+'</pre></td>'+
+                    '</tr>'+
+                    '<tr>'+
+                        '<td>group:</td>'+
+                        '<td>'+action+'</td>'+
+                    '</tr>'+
+                    '<tr>'+
+                        '<td>testcase:</td>'+
+                        '<td>'+action2+'</td>'+
+                    '</tr>'+
+                    '<tr>'+
+                        '<td>test by:</td>'+
+                        '<td>'+action3+'</td>'+
+                    '</tr>'+
+                    '<tr>'+
+                        '<td>state:</td>'+
+                        '<td>'+action4+'</td>'+
+                    '</tr>'+
+                '</table>';
+            }
+
+            $(document).ready(function() {
+                    var table = $('#sortable-table').DataTable( {
+                        "ajax": "data",
+                        "columns": [
+                            {
+                                "className":      'details-control',
+                                "orderable":      false,
+                                "data":           null,
+                                "defaultContent": ''
+                            },
+                            { "data": "name" },
+                            { "data": "author" },
+                            { "data": "group" },
+                            {
+                                "data": "patchlink",
+                                "render": function( data ) {
+                                    return '<a href="'+data+'">link</a>';
+                                }
+                            },
+                            {
+                                "data": "testcase",
+                                "render": function( data ) {
+                                    if (data == "N/A") {
+                                        return '<a>N/A</a>';
+                                    }
+                                    return '<a href="'+data+'">link</a>';
+                                }
+                            },
+                            { "data": "testby" },
+                            { "data": "state" },
+                            { "data": "desc" },
+                            { "data": "date" },
+                        ],
+                        "initComplete": function () {
+                            this.api().columns().every( function () {
+                                var column = this;
+                                var title = $(column.header()).text();
+                                if (title.length == 0 || ['Name', 'patch link', 'testcase'].indexOf(title) > -1) {
+                                    return;
+                                }
+                                var select = $('<select><option value=""></option></select>')
+                                    .appendTo( $(column.footer()).empty() )
+                                    .on( 'change', function () {
+                                        var val = $.fn.dataTable.util.escapeRegex(
+                                            $(this).val()
+                                        );
+                 
+                                        column
+                                            .search( val ? '^'+val+'$' : '', true, false )
+                                            .draw();
+                                    } );
+                 
+                                column.data().unique().sort().each( function ( d, j ) {
+                                    select.append( '<option value="'+d+'">'+d+'</option>' )
+                                } );
+                            } );
+                        }
+                    } );
+
+                    table.columns().every( function () {
+                            var column = this;
+                            var title = $(column.header()).text();
+                            if ( ['desc', 'date'].indexOf(title) > -1 ) {
+                                this.visible(false);
+                            }
+                    });
+                    $('#sortable-table tbody').on('click', 'td.details-control', function () {
+                        var tr = $(this).closest('tr');
+                        var row = table.row( tr );
+                 
+                        if ( row.child.isShown() ) {
+                            // This row is already open - close it
+                            row.child.hide();
+                            tr.removeClass('shown');
+                        }
+                        else {
+                            // Open this row
+                            row.child( format( row ) ).show();
+                            tr.addClass('shown');
+                        }
+                    } );
+            } );
+        </script>
+        <h3 align='center'>libvirt upstream patch list</h3>
+        <table id="sortable-table" class="display" cellspacing="0" width="100%">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Name</th>
+                    <th>Author</th>
+                    <th>group info</th>
+                    <th>patch link</th>
+                    <th>testcase</th>
+                    <th>test by</th>
+                    <th>state</th>
+                    <th>desc</th>
+                    <th>date</th>
+                </tr>
+            </thead>
+            <tfoot>
+                <tr>
+                    <th></th>
+                    <th>Name</th>
+                    <th>Author</th>
+                    <th>group info</th>
+                    <th>patch link</th>
+                    <th>testcase</th>
+                    <th>test by</th>
+                    <th>state</th>
+                    <th>desc</th>
+                    <th>date</th>
+                </tr>
+            </tfoot>
+        </table>
+    </body>
+</html>
