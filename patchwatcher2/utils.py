@@ -8,6 +8,7 @@ from subprocess import STDOUT
 import re
 import cPickle as pickle
 import os
+from dateutil import parser
 import logging
 
 logging.basicConfig(level=logging.DEBUG,
@@ -36,6 +37,9 @@ MONTH = {'12':'December',
          '2':'February',
          '1':'January',
          }
+
+def transtime(time):
+    return parser.parse(time)
 
 def bakdb():
     cmd = "cp -f db.sqlite3 ./dbbak/"
@@ -135,6 +139,8 @@ def parsehtmlpatch(htmlstr):
         if pre.text:
             msg += pre.text
         for n in pre.getchildren():
+            if n.text:
+                msg += n.text
             msg += n.tail
 
     author = author.split('<')[0]

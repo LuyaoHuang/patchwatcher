@@ -9,7 +9,7 @@ class Dataset(models.Model):
     group = models.CharField(max_length=10)
     patchlink = models.CharField(max_length=100)
     author = models.CharField(max_length=100)
-    date = models.CharField(max_length=100)
+    date = models.DateTimeField()
     testcase = models.CharField(max_length=100)
     testby = models.CharField(max_length=100)
     state = models.CharField(max_length=100)

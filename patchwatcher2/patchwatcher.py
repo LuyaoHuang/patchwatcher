@@ -54,7 +54,7 @@ def updatepatchinfo(groupinfo, patchset, patchlink):
 
         Dataset.objects.create(name=n, desc=patchlink[n][1],
                                 group=group, patchlink=patchlink[n][0],
-                                author=patchlink[n][2],date=patchlink[n][3],
+                                author=patchlink[n][2],date=transtime(patchlink[n][3]),
                                 testcase='N/A',testby='N/A',state='ToDo')
 
 def parsedatemail(maillist, startdate, enddate, startmsgid):

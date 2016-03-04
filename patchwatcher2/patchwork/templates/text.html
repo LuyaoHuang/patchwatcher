@@ -42,9 +42,13 @@
                     }
                 } );
             }
-            function changetestcase( link, testcase ) {
+            function changetestcase(x, link, testcase ) {
                 var table = $('#sortable-table').DataTable();
-                alertify.prompt('Link:',function(evt, value) {
+                var value = x.value
+                if (value == testcase) {
+                    return
+                }
+                alertify.confirm('Update testcase from '+testcase+' to '+value+' ?',function(evt) {
                     if (evt) {
                         $.post(
                             "updatetestcase",
@@ -66,11 +70,15 @@
                             }
                         );
                     }
-                }, ''+testcase+'');
+                });
             }
-            function changetestby( link, testby ) {
+            function changetestby(x, link, testby ) {
                 var table = $('#sortable-table').DataTable();
-                alertify.prompt('Test by:', function(evt, value) {
+                var value = x.value
+                if (value == testby) {
+                    return
+                }
+                alertify.confirm('Update testby from '+testby+' to '+value+' ?',function(evt) {
                     if (evt) {
                         $.post(
                             "updatetestby",
@@ -153,10 +161,8 @@
                 }
                 action +=   ' value="others">others</option>'
                 action +='</select>'
-                action2 +='<a href="'+d.testcase+'">'+d.testcase+'</a>'
-                action2 +=' <button type="button" onclick="changetestcase(\''+d.patchlink+'\', \''+d.testcase+'\')">Update</button>'
-                action3 +=''+d.testby+''
-                action3 +=' <button type="button" onclick="changetestby(\''+d.patchlink+'\', \''+d.testby+'\')">Update</button>'
+                action2 +='<input type="text" id="testcase" value="'+d.testcase+'" onblur="changetestcase(this, \''+d.patchlink+'\', \''+d.testcase+'\')"/>'
+                action3 +='<input type="text" id="testby" value="'+d.testby+'" onblur="changetestby(this, \''+d.patchlink+'\', \''+d.testby+'\')"/>'
                 action4 += '<select name="state" onChange="changestate(this, \''+d.patchlink+'\', \''+d.state+'\')">'
                 action4 +=   '<option'
                 if (d.state == "ToDo") {
@@ -178,6 +184,16 @@
                     action4 += ' selected="selected"';
                 }
                 action4 +=   ' value="Fail">Fail</option>'
+                action4 +=   '<option'
+                if (d.state == "untestable") {
+                    action4 += ' selected="selected"';
+                }
+                action4 +=   ' value="untestable">untestable</option>'
+                action4 +=   '<option'
+                if (d.state == "pending") {
+                    action4 += ' selected="selected"';
+                }
+                action4 +=   ' value="pending">pending</option>'
                 action4 +='</select>'
                 return '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
                     '<tr>'+
@@ -227,6 +243,7 @@
                             },
                             { "data": "name" },
                             { "data": "author" },
+                            { "data": "date" },
                             { "data": "group" },
                             {
                                 "data": "patchlink",
@@ -246,13 +263,12 @@
                             { "data": "testby" },
                             { "data": "state" },
                             { "data": "desc" },
-                            { "data": "date" },
                         ],
                         "initComplete": function () {
                             this.api().columns().every( function () {
                                 var column = this;
                                 var title = $(column.header()).text();
-                                if (title.length == 0 || ['Name', 'patch link', 'testcase'].indexOf(title) > -1) {
+                                if (title.length == 0 || ['Name', 'patch link', 'testcase', 'date'].indexOf(title) > -1) {
                                     return;
                                 }
                                 var select = $('<select><option value=""></option></select>')
@@ -277,7 +293,7 @@
                     table.columns().every( function () {
                             var column = this;
                             var title = $(column.header()).text();
-                            if ( ['desc', 'date'].indexOf(title) > -1 ) {
+                            if ( ['desc'].indexOf(title) > -1 ) {
                                 this.visible(false);
                             }
                     });
@@ -305,13 +321,13 @@
                     <th></th>
                     <th>Name</th>
                     <th>Author</th>
+                    <th>date</th>
                     <th>group info</th>
                     <th>patch link</th>
                     <th>testcase</th>
                     <th>test by</th>
                     <th>state</th>
                     <th>desc</th>
-                    <th>date</th>
                 </tr>
             </thead>
             <tfoot>
@@ -319,13 +335,13 @@
                     <th></th>
                     <th>Name</th>
                     <th>Author</th>
+                    <th>date</th>
                     <th>group info</th>
                     <th>patch link</th>
                     <th>testcase</th>
                     <th>test by</th>
                     <th>state</th>
                     <th>desc</th>
-                    <th>date</th>
                 </tr>
             </tfoot>
         </table>
