@@ -17,6 +17,7 @@ def data(request):
     ret = []
     for n in Dataset.objects.all():
         json_case = model_to_dict(n)
+        json_case['date'] = json_case['date'].strftime("%Y-%m-%dT%H:%M:%S")
         ret.append(json_case)
 
     return JsonResponse({'data': ret})
