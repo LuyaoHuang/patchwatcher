@@ -77,3 +77,14 @@ def updatestate(request):
         data.save()
 
     return JsonResponse({'ret': 0})
+
+def updatecomment(request):
+    link = request.POST.get('link')
+    newcom = request.POST.get('newcomment')
+    oldcom = request.POST.get('oldcomment')
+
+    data = Dataset.objects.get(patchlink=link)
+    data.comment = newcom
+    data.save()
+
+    return JsonResponse({'ret': 0})

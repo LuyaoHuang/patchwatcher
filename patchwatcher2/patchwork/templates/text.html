@@ -28,11 +28,10 @@
                             function ( response ) {
                                 if (response.ret == 0) {
                                     alertify.alert("Updated success");
-                                    table.ajax.reload();
-                                }
+                                    table.fnClearTable();
                                 else {
                                     alertify.alert("Updated failed: group already been updated");
-                                    table.ajax.reload();
+                                    table.fnClearTable();
                                 }
                             }
                         );
@@ -61,16 +60,41 @@
                             function ( response ) {
                                 if (response.ret == 0) {
                                     alertify.alert("Updated success");
-                                    table.ajax.reload();
+                                    table.fnClearTable();
                                 }
                                 else {
                                     alertify.alert("Updated failed: testcase already been updated");
-                                    table.ajax.reload();
+                                    table.fnClearTable();
                                 }
                             }
                         );
                     }
                 });
+            }
+            function changecomment(x, link, comment ) {
+                var table = $('#sortable-table').DataTable();
+                var value = x.value
+                if (value == comment) {
+                    return
+                }
+                $.post(
+                    "updatecomment",
+                    {
+                        'csrfmiddlewaretoken': '{{ csrf_token }}',
+                        'link': link,
+                        'newcomment': value,
+                        'oldcomment': comment,
+                    },
+                    function ( response ) {
+                        if (response.ret == 0) {  
+                            table.fnClearTable();
+                        }
+                        else {
+                            alertify.alert("Updated failed: comment already been updated");
+                            table.fnClearTable();
+                        }
+                    }
+                );
             }
             function changetestby(x, link, testby ) {
                 var table = $('#sortable-table').DataTable();
@@ -91,11 +115,11 @@
                             function ( response ) {
                                 if (response.ret == 0) {
                                     alertify.alert("Updated success");
-                                    table.ajax.reload();
+                                    table.fnClearTable();
                                 }
                                 else {
                                     alertify.alert("Updated failed: testby already been updated");
-                                    table.ajax.reload();
+                                    table.fnClearTable();
                                 }
                             }
                         );
@@ -118,11 +142,11 @@
                             function ( response ) {
                                 if (response.ret == 0) {
                                     alertify.alert("Updated success");
-                                    table.ajax.reload();
+                                    table.fnClearTable();
                                 }
                                 else {
                                     alertify.alert("Updated failed: state already been updated");
-                                    table.ajax.reload();
+                                    table.fnClearTable();
                                 }
                             }
                         );
@@ -139,62 +163,28 @@
                 var action2 = ''
                 var action3 = ''
                 var action4 = ''
+                var comment = ''
                 action += '<select name="group" onChange="changegroup(this, \''+d.patchlink+'\', \''+d.group+'\')">'
-                action +=   '<option'
-                if (d.group == "group1") {
-                    action += ' selected="selected"';
-                }
-                action +=   ' value="group1">group1</option>'
-                action +=   '<option'
-                if (d.group == "group2") {
-                    action += ' selected="selected"';
-                }
-                action +=   ' value="group2">group2</option>'
-                action +=   '<option'
-                if (d.group == "group3") {
-                    action += ' selected="selected"';
-                }
-                action +=   ' value="group3">group3</option>'
-                action +=   '<option'
-                if (d.group == "others") {
-                    action += ' selected="selected"';
-                }
-                action +=   ' value="others">others</option>'
+                $.each(["group1", "group2", "group3", "others"], function(n, value) {
+                    action +=   '<option'
+                    if (d.group == value) {
+                        action += ' selected="selected"';
+                    }
+                    action +=   ' value="'+value+'">'+value+'</option>'
+                });
                 action +='</select>'
                 action2 +='<input type="text" id="testcase" value="'+d.testcase+'" onblur="changetestcase(this, \''+d.patchlink+'\', \''+d.testcase+'\')"/>'
                 action3 +='<input type="text" id="testby" value="'+d.testby+'" onblur="changetestby(this, \''+d.patchlink+'\', \''+d.testby+'\')"/>'
                 action4 += '<select name="state" onChange="changestate(this, \''+d.patchlink+'\', \''+d.state+'\')">'
-                action4 +=   '<option'
-                if (d.state == "ToDo") {
-                    action4 += ' selected="selected"';
-                }
-                action4 +=   ' value="ToDo">ToDo</option>'
-                action4 +=   '<option'
-                if (d.state == "Pass") {
-                    action4 += ' selected="selected"';
-                }
-                action4 +=   ' value="Pass">Pass</option>'
-                action4 +=   '<option'
-                if (d.state == "NACK") {
-                    action4 += ' selected="selected"';
-                }
-                action4 +=   ' value="NACK">NACK</option>'
-                action4 +=   '<option'
-                if (d.state == "Fail") {
-                    action4 += ' selected="selected"';
-                }
-                action4 +=   ' value="Fail">Fail</option>'
-                action4 +=   '<option'
-                if (d.state == "untestable") {
-                    action4 += ' selected="selected"';
-                }
-                action4 +=   ' value="untestable">untestable</option>'
-                action4 +=   '<option'
-                if (d.state == "pending") {
-                    action4 += ' selected="selected"';
-                }
-                action4 +=   ' value="pending">pending</option>'
+                $.each(["ToDo", "Pass", "NACK", "Fail", "untestable", "pending"], function(n, value) {
+                    action4 +=   '<option'
+                    if (d.state == value) {
+                        action4 += ' selected="selected"';
+                    }
+                    action4 +=   ' value="'+value+'">'+value+'</option>'
+                });
                 action4 +='</select>'
+                comment +='<textarea id="comment" cols="100" rows="10" onblur="changecomment(this, \''+d.patchlink+'\', \''+d.comment+'\')">'+d.comment+'</textarea>'
                 return '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
                     '<tr>'+
                         '<td>name:</td>'+
@@ -227,6 +217,10 @@
                     '<tr>'+
                         '<td>state:</td>'+
                         '<td>'+action4+'</td>'+
+                    '</tr>'+
+                    '<tr>'+
+                        '<td>comment:</td>'+
+                        '<td>'+comment+'</td>'+
                     '</tr>'+
                 '</table>';
             }

@@ -10,9 +10,10 @@ class Dataset(models.Model):
     patchlink = models.CharField(max_length=100)
     author = models.CharField(max_length=100)
     date = models.DateTimeField()
-    testcase = models.CharField(max_length=100)
-    testby = models.CharField(max_length=100)
-    state = models.CharField(max_length=100)
+    testcase = models.CharField(max_length=100, default="N/A" ,blank=True, null=True)
+    testby = models.CharField(max_length=100, default="" ,blank=True, null=True)
+    state = models.CharField(max_length=100, default="ToDo")
+    comment = models.CharField(max_length=65536, default="" ,blank=True, null=True)
 
 class currentwork(models.Model):
     date = models.CharField(max_length=10)

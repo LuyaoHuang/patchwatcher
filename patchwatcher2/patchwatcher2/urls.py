@@ -25,4 +25,5 @@ urlpatterns = [
     url(r'^updatetestcase$', views.updatetestcase, name='updatetestcase'),
     url(r'^updatetestby$', views.updatetestby, name='updatetestby'),
     url(r'^updatestate$', views.updatestate, name='updatestate'),
+    url(r'^updatecomment$', views.updatecomment, name='updatecomment'),
 ]
