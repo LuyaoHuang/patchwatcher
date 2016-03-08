@@ -88,3 +88,31 @@ def updatecomment(request):
     data.save()
 
     return JsonResponse({'ret': 0})
+
+def updatepushed(request):
+    link = request.POST.get('link')
+    newpushed = request.POST.get('newpushed')
+    oldpushed = request.POST.get('oldpushed')
+
+    data = Dataset.objects.get(patchlink=link)
+    if data.pushed != oldpushed:
+        return JsonResponse({'ret': 1})
+    else:
+        data.pushed = newpushed
+        data.save()
+
+    return JsonResponse({'ret': 0})
+
+def updatetestplan(request):
+    link = request.POST.get('link')
+    newtestplan = request.POST.get('newtestplan')
+    oldtestplan = request.POST.get('oldtestplan')
+
+    data = Dataset.objects.get(patchlink=link)
+    if data.testplan != oldtestplan:
+        return JsonResponse({'ret': 1})
+    else:
+        data.testplan = newtestplan
+        data.save()
+
+    return JsonResponse({'ret': 0})

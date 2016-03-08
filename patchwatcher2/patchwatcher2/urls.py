@@ -26,4 +26,6 @@ urlpatterns = [
     url(r'^updatetestby$', views.updatetestby, name='updatetestby'),
     url(r'^updatestate$', views.updatestate, name='updatestate'),
     url(r'^updatecomment$', views.updatecomment, name='updatecomment'),
+    url(r'^updatepushed$', views.updatepushed, name='updatepushed'),
+    url(r'^updatetestplan$', views.updatetestplan, name='updatetestplan'),
 ]

@@ -9,6 +9,7 @@
        	<link rel="stylesheet" href="http://fabien-d.github.io/alertify.js/assets/js/lib/alertify/alertify.core.css" />
         <link rel="stylesheet" href="http://fabien-d.github.io/alertify.js/assets/js/lib/alertify/alertify.default.css" id="toggleCSS" />
 		<script src="http://fabien-d.github.io/alertify.js/assets/js/lib/alertify/alertify.min.js"></script>
+		<script src="//cdn.datatables.net/plug-ins/1.10.11/api/fnReloadAjax.js"></script>
     </head>
     <body>
         <script>
@@ -28,10 +29,9 @@
                             function ( response ) {
                                 if (response.ret == 0) {
                                     alertify.alert("Updated success");
-                                    table.fnClearTable();
+                                }
                                 else {
                                     alertify.alert("Updated failed: group already been updated");
-                                    table.fnClearTable();
                                 }
                             }
                         );
@@ -44,6 +44,8 @@
             function changetestcase(x, link, testcase ) {
                 var table = $('#sortable-table').DataTable();
                 var value = x.value
+                console.log(testcase)
+                console.log(value)
                 if (value == testcase) {
                     return
                 }
@@ -60,11 +62,9 @@
                             function ( response ) {
                                 if (response.ret == 0) {
                                     alertify.alert("Updated success");
-                                    table.fnClearTable();
                                 }
                                 else {
                                     alertify.alert("Updated failed: testcase already been updated");
-                                    table.fnClearTable();
                                 }
                             }
                         );
@@ -72,7 +72,7 @@
                 });
             }
             function changecomment(x, link, comment ) {
-                var table = $('#sortable-table').DataTable();
+                var table = $('#sortable-table').dataTable();
                 var value = x.value
                 if (value == comment) {
                     return
@@ -86,12 +86,10 @@
                         'oldcomment': comment,
                     },
                     function ( response ) {
-                        if (response.ret == 0) {  
-                            table.fnClearTable();
+                        if (response.ret == 0) {
                         }
                         else {
                             alertify.alert("Updated failed: comment already been updated");
-                            table.fnClearTable();
                         }
                     }
                 );
@@ -115,11 +113,9 @@
                             function ( response ) {
                                 if (response.ret == 0) {
                                     alertify.alert("Updated success");
-                                    table.fnClearTable();
                                 }
                                 else {
                                     alertify.alert("Updated failed: testby already been updated");
-                                    table.fnClearTable();
                                 }
                             }
                         );
@@ -142,11 +138,65 @@
                             function ( response ) {
                                 if (response.ret == 0) {
                                     alertify.alert("Updated success");
-                                    table.fnClearTable();
                                 }
                                 else {
                                     alertify.alert("Updated failed: state already been updated");
-                                    table.fnClearTable();
+                                }
+                            }
+                        );
+                    }
+                    else {
+                        return
+                    }
+                });
+            }
+            function changepushed( osel, link, pushed ) {
+                var table = $('#sortable-table').DataTable();
+                var newpushed = osel.options[osel.selectedIndex].text;
+                var r = alertify.confirm('Update pushed status from '+pushed+' to '+newpushed+' ?', function (e) {
+                    if (e) {
+                        $.post(
+                            "updatepushed",
+                            {
+                                'csrfmiddlewaretoken': '{{ csrf_token }}',
+                                'link': link,
+                                'newpushed': newpushed,
+                                'oldpushed': pushed,
+                            },
+                            function ( response ) {
+                                if (response.ret == 0) {
+                                    alertify.alert("Updated success");
+                                }
+                                else {
+                                    alertify.alert("Updated failed: pushed status already been updated");
+                                }
+                            }
+                        );
+                    }
+                    else {
+                        return
+                    }
+                });
+            }
+            function changetestplan( osel, link, testplan ) {
+                var table = $('#sortable-table').DataTable();
+                var newtestplan = osel.options[osel.selectedIndex].text;
+                var r = alertify.confirm('Update testplan update status from '+testplan+' to '+newtestplan+' ?', function (e) {
+                    if (e) {
+                        $.post(
+                            "updatetestplan",
+                            {
+                                'csrfmiddlewaretoken': '{{ csrf_token }}',
+                                'link': link,
+                                'newtestplan': newtestplan,
+                                'oldtestplan': testplan,
+                            },
+                            function ( response ) {
+                                if (response.ret == 0) {
+                                    alertify.alert("Updated success");
+                                }
+                                else {
+                                    alertify.alert("Updated failed: testplan status already been updated");
                                 }
                             }
                         );
@@ -164,6 +214,8 @@
                 var action3 = ''
                 var action4 = ''
                 var comment = ''
+                var pushed = ''
+                var testplan = ''
                 action += '<select name="group" onChange="changegroup(this, \''+d.patchlink+'\', \''+d.group+'\')">'
                 $.each(["group1", "group2", "group3", "others"], function(n, value) {
                     action +=   '<option'
@@ -185,6 +237,24 @@
                 });
                 action4 +='</select>'
                 comment +='<textarea id="comment" cols="100" rows="10" onblur="changecomment(this, \''+d.patchlink+'\', \''+d.comment+'\')">'+d.comment+'</textarea>'
+                testplan += '<select name="testplan" onChange="changetestplan(this, \''+d.patchlink+'\', \''+d.testplan+'\')">'
+                $.each(["ToDo", "Done",], function(n, value) {
+                    testplan +=   '<option'
+                    if (d.testplan == value) {
+                        testplan += ' selected="selected"';
+                    }
+                    testplan +=   ' value="'+value+'">'+value+'</option>'
+                });
+                testplan +='</select>'
+                pushed += '<select name="pushed" onChange="changepushed(this, \''+d.patchlink+'\', \''+d.pushed+'\')">'
+                $.each(["Yes", "No",], function(n, value) {
+                    pushed +=   '<option'
+                    if (d.pushed == value) {
+                        pushed += ' selected="selected"';
+                    }
+                    pushed +=   ' value="'+value+'">'+value+'</option>'
+                });
+                pushed +='</select>'
                 return '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
                     '<tr>'+
                         '<td>name:</td>'+
@@ -209,14 +279,16 @@
                     '<tr>'+
                         '<td>testcase:</td>'+
                         '<td>'+action2+'</td>'+
-                    '</tr>'+
-                    '<tr>'+
+                        '<td>update testplan:</td>'+
+                        '<td>'+testplan+'</td>'+
                         '<td>test by:</td>'+
                         '<td>'+action3+'</td>'+
                     '</tr>'+
                     '<tr>'+
                         '<td>state:</td>'+
                         '<td>'+action4+'</td>'+
+                        '<td>pushed:</td>'+
+                        '<td>'+pushed+'</td>'+
                     '</tr>'+
                     '<tr>'+
                         '<td>comment:</td>'+
@@ -236,11 +308,11 @@
                                 "defaultContent": ''
                             },
                             { "data": "name" },
-                            { "data": "author" },
                             { 
                                 "data": "date",
                             },
                             { "data": "group" },
+                            { "data": "pushed" },
                             {
                                 "data": "patchlink",
                                 "render": function( data ) {
@@ -256,10 +328,11 @@
                                     return '<a href="'+data+'">link</a>';
                                 }
                             },
+                            { "data": "testplan" },
                             { "data": "testby" },
                             { "data": "state" },
-                            { "data": "desc" },
                         ],
+                        "order": [[ 2, "desc" ]],
                         "initComplete": function () {
                             this.api().columns().every( function () {
                                 var column = this;
@@ -286,13 +359,6 @@
                         }
                     } );
 
-                    table.columns().every( function () {
-                            var column = this;
-                            var title = $(column.header()).text();
-                            if ( ['desc'].indexOf(title) > -1 ) {
-                                this.visible(false);
-                            }
-                    });
                     $('#sortable-table tbody').on('click', 'td.details-control', function () {
                         var tr = $(this).closest('tr');
                         var row = table.row( tr );
@@ -300,6 +366,7 @@
                         if ( row.child.isShown() ) {
                             // This row is already open - close it
                             row.child.hide();
+                            table.ajax.reload(null,false);
                             tr.removeClass('shown');
                         }
                         else {
@@ -316,28 +383,28 @@
                 <tr>
                     <th></th>
                     <th>Name</th>
-                    <th>Author</th>
                     <th>date</th>
                     <th>group info</th>
+                    <th>pushed</th>
                     <th>patch link</th>
                     <th>testcase</th>
+                    <th>update testplan</th>
                     <th>test by</th>
                     <th>state</th>
-                    <th>desc</th>
                 </tr>
             </thead>
             <tfoot>
                 <tr>
                     <th></th>
                     <th>Name</th>
-                    <th>Author</th>
                     <th>date</th>
                     <th>group info</th>
+                    <th>pushed</th>
                     <th>patch link</th>
                     <th>testcase</th>
+                    <th>update testplan</th>
                     <th>test by</th>
                     <th>state</th>
-                    <th>desc</th>
                 </tr>
             </tfoot>
         </table>
