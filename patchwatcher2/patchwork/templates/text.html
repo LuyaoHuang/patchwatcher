@@ -120,7 +120,7 @@
                             }
                         );
                     }
-                }, ''+testby+'');
+                });
             }
             function changestate( osel, link, state ) {
                 var table = $('#sortable-table').DataTable();
@@ -206,6 +206,37 @@
                     }
                 });
             }
+            function changefeature( x, link, feature ) {
+                var table = $('#sortable-table').DataTable();
+                var newfeature = x.value
+                if (newfeature == feature) {
+                    return
+                }
+                var r = alertify.confirm('Update feature from '+feature+' to '+newfeature+' ?', function (e) {
+                    if (e) {
+                        $.post(
+                            "updatefeature",
+                            {
+                                'csrfmiddlewaretoken': '{{ csrf_token }}',
+                                'link': link,
+                                'newfeature': newfeature,
+                                'oldfeature': feature,
+                            },
+                            function ( response ) {
+                                if (response.ret == 0) {
+                                    alertify.alert("Updated success");
+                                }
+                                else {
+                                    alertify.alert("Updated failed: feature status already been updated");
+                                }
+                            }
+                        );
+                    }
+                    else {
+                        return
+                    }
+                });
+            }
             function format ( row ) {
                 d = row.data()
                 // `d` is the original data object for the row
@@ -216,6 +247,7 @@
                 var comment = ''
                 var pushed = ''
                 var testplan = ''
+                var feature = ''
                 action += '<select name="group" onChange="changegroup(this, \''+d.patchlink+'\', \''+d.group+'\')">'
                 $.each(["group1", "group2", "group3", "others"], function(n, value) {
                     action +=   '<option'
@@ -255,6 +287,7 @@
                     pushed +=   ' value="'+value+'">'+value+'</option>'
                 });
                 pushed +='</select>'
+                feature +='<input type="text" id="feature" value="'+d.feature+'" onblur="changefeature(this, \''+d.patchlink+'\', \''+d.feature+'\')"/>'
                 return '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
                     '<tr>'+
                         '<td>name:</td>'+
@@ -281,14 +314,20 @@
                         '<td>'+action2+'</td>'+
                         '<td>update testplan:</td>'+
                         '<td>'+testplan+'</td>'+
-                        '<td>test by:</td>'+
-                        '<td>'+action3+'</td>'+
                     '</tr>'+
                     '<tr>'+
                         '<td>state:</td>'+
                         '<td>'+action4+'</td>'+
                         '<td>pushed:</td>'+
                         '<td>'+pushed+'</td>'+
+                    '</tr>'+
+                    '<tr>'+
+                        '<td>test by:</td>'+
+                        '<td>'+action3+'</td>'+
+                    '</tr>'+
+                    '<tr>'+
+                        '<td>feature:</td>'+
+                        '<td>'+feature+'</td>'+
                     '</tr>'+
                     '<tr>'+
                         '<td>comment:</td>'+
@@ -307,12 +346,15 @@
                                 "data":           null,
                                 "defaultContent": ''
                             },
-                            { "data": "name" },
+                            { 
+                                "data": "name",
+                            },
                             { 
                                 "data": "date",
                             },
                             { "data": "group" },
                             { "data": "pushed" },
+                            { "data": "feature" },
                             {
                                 "data": "patchlink",
                                 "render": function( data ) {
@@ -386,6 +428,7 @@
                     <th>date</th>
                     <th>group info</th>
                     <th>pushed</th>
+                    <th>feature</th>
                     <th>patch link</th>
                     <th>testcase</th>
                     <th>update testplan</th>
@@ -400,6 +443,7 @@
                     <th>date</th>
                     <th>group info</th>
                     <th>pushed</th>
+                    <th>feature</th>
                     <th>patch link</th>
                     <th>testcase</th>
                     <th>update testplan</th>

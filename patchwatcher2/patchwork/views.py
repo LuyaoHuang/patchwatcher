@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from django.template import RequestContext, loader
 from django.forms.models import model_to_dict
 from .models import Dataset
+import cgi
 
 def index(request):
     template = loader.get_template('text.html')
@@ -18,6 +19,7 @@ def data(request):
     for n in Dataset.objects.all():
         json_case = model_to_dict(n)
         json_case['date'] = json_case['date'].strftime("%Y-%m-%dT%H:%M:%S")
+        json_case['name'] = cgi.escape(json_case['name']).encode('ascii', 'xmlcharrefreplace')
         ret.append(json_case)
 
     return JsonResponse({'data': ret})
@@ -113,6 +115,20 @@ def updatetestplan(request):
         return JsonResponse({'ret': 1})
     else:
         data.testplan = newtestplan
+        data.save()
+
+    return JsonResponse({'ret': 0})
+
+def updatefeature(request):
+    link = request.POST.get('link')
+    newfeature = request.POST.get('newfeature')
+    oldfeature = request.POST.get('oldfeature')
+
+    data = Dataset.objects.get(patchlink=link)
+    if data.feature != oldfeature:
+        return JsonResponse({'ret': 1})
+    else:
+        data.feature = newfeature
         data.save()
 
     return JsonResponse({'ret': 0})

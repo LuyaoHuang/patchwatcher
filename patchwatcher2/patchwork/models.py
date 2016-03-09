@@ -16,6 +16,7 @@ class Dataset(models.Model):
     comment = models.CharField(max_length=65536, default="" ,blank=True, null=True)
     pushed = models.CharField(max_length=10, default="No" ,blank=True, null=True)
     testplan = models.CharField(max_length=10, default="ToDo" ,blank=True, null=True)
+    feature = models.CharField(max_length=100, default="" ,blank=True, null=True)
 
 class currentwork(models.Model):
     date = models.CharField(max_length=10)

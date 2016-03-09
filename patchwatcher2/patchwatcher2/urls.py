@@ -28,4 +28,5 @@ urlpatterns = [
     url(r'^updatecomment$', views.updatecomment, name='updatecomment'),
     url(r'^updatepushed$', views.updatepushed, name='updatepushed'),
     url(r'^updatetestplan$', views.updatetestplan, name='updatetestplan'),
+    url(r'^updatefeature$', views.updatefeature, name='updatefeature'),
 ]
