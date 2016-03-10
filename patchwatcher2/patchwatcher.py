@@ -163,7 +163,7 @@ def patchwatcher():
 
     while 1:
         count += 1
-        if count%60 == 0:
+        if count%6 == 0:
             logging.info("backups db")
             bakdb()
 
@@ -173,12 +173,12 @@ def patchwatcher():
         try:
             groupinfo, patchset, patchlink = getmailwithdate(LIBVIR_LIST, start, end)
         except TypeError:
-            time.sleep(60)
+            time.sleep(600)
             continue
 
         logging.info("update %d patches" % len(groupinfo))
         updatepatchinfo(groupinfo, patchset, patchlink)
-        time.sleep(60)
+        time.sleep(600)
 
 if __name__ == '__main__':
     patchwatcher()
