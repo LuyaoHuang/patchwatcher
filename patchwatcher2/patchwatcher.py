@@ -102,13 +102,14 @@ def parsedatemail(maillist, startdate, enddate, startmsgid):
 
     return retdict
 
-def getmailwithdate(maillist, start, end):
+def getmailwithdate(maillist, start, end, skipbz=True):
     if end == []:
         """ get current date """
         end.append(time.strftime("%Y-%m"))
 
     maildict = parsedatemail(maillist, start[0], end[0], start[1])
     maildict2 = {}
+    skippatch = []
     patchlink = {}
     lastmsginfo = start
     for year in maildict.keys():
@@ -117,6 +118,12 @@ def getmailwithdate(maillist, start, end):
                 link = genurlofpatch(maillist, year, month, msgid)
                 strings = getmaildata(link)
                 info = parsehtmlpatch(strings)
+                if skipbz:
+                    """ skip the patch which already have bz """
+                    if "bugzilla.redhat.com" in info[3]:
+                        logging.info("skip a patch named %s it has bugzilla" % cleansubject(info[0])[1])
+                        skippatch.append(cleansubject(info[0])[1])
+
                 maildict2[cleansubject(info[0])[1]] = info[3]
                 patchlink[cleansubject(info[0])[1]] = [link, getdescfrommsg(info[3]), info[1], info[2]]
                 lastmsginfo = ['%s-%s' % (year, month), str(msgid)]
@@ -126,6 +133,26 @@ def getmailwithdate(maillist, start, end):
 
     freshdateinfo(lastmsginfo)
     result, patchset = splitpatchinternal(maildict2)
+
+    for n in skippatch:
+        if n in patchset.keys():
+            for i in patchset[n]:
+                del result[i]
+
+            del patchset[n]
+            del result[n]
+        else:
+            for i in patchset.keys():
+                if n in patchset[i]:
+                    for j in patchset[i]:
+                        del result[j]
+
+                    del patchset[i]
+                    del result[i]
+                    break
+
+            if n in result.keys():
+                del result[n]
 
     return result, patchset, patchlink
 
