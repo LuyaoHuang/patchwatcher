@@ -131,7 +131,6 @@ def getmailwithdate(maillist, start, end, skipbz=True):
     if lastmsginfo == start:
         return
 
-    freshdateinfo(lastmsginfo)
     result, patchset = splitpatchinternal(maildict2)
 
     for n in skippatch:
@@ -154,7 +153,7 @@ def getmailwithdate(maillist, start, end, skipbz=True):
             if n in result.keys():
                 del result[n]
 
-    return result, patchset, patchlink
+    return result, patchset, patchlink, lastmsginfo
 
 def patchwatcher():
     start = ['2016-3', '00000']
@@ -171,13 +170,14 @@ def patchwatcher():
             start = loaddateinfo()
 
         try:
-            groupinfo, patchset, patchlink = getmailwithdate(LIBVIR_LIST, start, end)
-        except TypeError:
+            groupinfo, patchset, patchlink, lastmsginfo = getmailwithdate(LIBVIR_LIST, start, end)
+        except TypeError, KeyError:
             time.sleep(600)
             continue
 
         logging.info("update %d patches" % len(groupinfo))
         updatepatchinfo(groupinfo, patchset, patchlink)
+        freshdateinfo(lastmsginfo)
         time.sleep(600)
 
 if __name__ == '__main__':
