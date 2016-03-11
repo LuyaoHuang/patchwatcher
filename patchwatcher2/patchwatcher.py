@@ -59,7 +59,6 @@ def updatepatchinfo(groupinfo, patchset, patchlink):
             elif len(patchlink[n][4]) == 1:
                 buglink = patchlink[n][4][0]
 
-        print buglink, n
         Dataset.objects.create(name=n, desc=patchlink[n][1],
                                 group=group, patchlink=patchlink[n][0],
                                 author=patchlink[n][2],date=transtime(patchlink[n][3]),
@@ -151,7 +150,6 @@ def getmailwithdate(maillist, start, end, skipbz=True):
                     patchlink[i].append(buglist[n])
 
         patchlink[n].append(buglist[n])
-        print buglist[n]
 
     return result, patchset, patchlink, lastmsginfo
 
