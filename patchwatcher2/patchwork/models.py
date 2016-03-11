@@ -17,6 +17,7 @@ class Dataset(models.Model):
     pushed = models.CharField(max_length=10, default="No" ,blank=True, null=True)
     testplan = models.CharField(max_length=10, default="ToDo" ,blank=True, null=True)
     feature = models.CharField(max_length=100, default="" ,blank=True, null=True)
+    buglink = models.CharField(max_length=100, default="N/A" ,blank=True, null=True)
 
 class currentwork(models.Model):
     date = models.CharField(max_length=10)

@@ -52,10 +52,18 @@ def updatepatchinfo(groupinfo, patchset, patchlink):
         else:
             group = 'others'
 
+        buglink = "N/A"
+        if len(patchlink[n]) == 5:
+            if len(patchlink[n][4]) > 1:
+                buglink = genbuglist(patchlink[n][4])
+            elif len(patchlink[n][4]) == 1:
+                buglink = patchlink[n][4][0]
+
+        print buglink, n
         Dataset.objects.create(name=n, desc=patchlink[n][1],
                                 group=group, patchlink=patchlink[n][0],
                                 author=patchlink[n][2],date=transtime(patchlink[n][3]),
-                                testcase='N/A',testby='N/A',state='ToDo')
+                                testcase='N/A',testby='N/A',state='ToDo',buglink=buglink)
 
 def parsedatemail(maillist, startdate, enddate, startmsgid):
     retdict = {}
@@ -109,20 +117,21 @@ def getmailwithdate(maillist, start, end, skipbz=True):
 
     maildict = parsedatemail(maillist, start[0], end[0], start[1])
     maildict2 = {}
-    skippatch = []
+    buglist = {}
     patchlink = {}
     lastmsginfo = start
     for year in maildict.keys():
         for month in maildict[year].keys():
             for msgid in maildict[year][month]:
+                hreflist = []
                 link = genurlofpatch(maillist, year, month, msgid)
                 strings = getmaildata(link)
-                info = parsehtmlpatch(strings)
+                info = parsehtmlpatch(strings, hreflist)
                 if skipbz:
                     """ skip the patch which already have bz """
                     if "bugzilla.redhat.com" in info[3]:
                         logging.info("skip a patch named %s it has bugzilla" % cleansubject(info[0])[1])
-                        skippatch.append(cleansubject(info[0])[1])
+                        buglist[cleansubject(info[0])[1]] = hreflist
 
                 maildict2[cleansubject(info[0])[1]] = info[3]
                 patchlink[cleansubject(info[0])[1]] = [link, getdescfrommsg(info[3]), info[1], info[2]]
@@ -133,25 +142,16 @@ def getmailwithdate(maillist, start, end, skipbz=True):
 
     result, patchset = splitpatchinternal(maildict2)
 
-    for n in skippatch:
-        if n in patchset.keys():
-            for i in patchset[n]:
-                del result[i]
+    for n in buglist.keys():
+        for i in patchset.keys():
+            if n in patchset[i]:
+                if len(patchlink[i]) == 5:
+                    patchlink[i][4].extend(buglist[n])
+                else:
+                    patchlink[i].append(buglist[n])
 
-            del patchset[n]
-            del result[n]
-        else:
-            for i in patchset.keys():
-                if n in patchset[i]:
-                    for j in patchset[i]:
-                        del result[j]
-
-                    del patchset[i]
-                    del result[i]
-                    break
-
-            if n in result.keys():
-                del result[n]
+        patchlink[n].append(buglist[n])
+        print buglist[n]
 
     return result, patchset, patchlink, lastmsginfo
 

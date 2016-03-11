@@ -38,6 +38,21 @@ MONTH = {'12':'December',
          '1':'January',
          }
 
+def genbuglist(buglist):
+    ret = 'https://bugzilla.redhat.com/buglist.cgi?bug_id='
+    tmplist = []
+    for n in buglist:
+        if not re.match('^https://bugzilla.redhat.com/',n):
+            continue
+
+        if n.split('=')[-1] not in tmplist:
+            tmplist.append(n.split('=')[-1])
+
+    for n in tmplist[:-1]:
+        ret += '%s,' % n
+    ret += tmplist[-1]
+    return ret
+
 def transtime(time):
     return parser.parse(time)
 
@@ -106,7 +121,7 @@ def getmaildata(link, timeout=None):
     os.remove(tmpfile)
     return ret
 
-def parsehtmlpatch(htmlstr):
+def parsehtmlpatch(htmlstr, link=None):
     xml = etree.HTML(htmlstr)
     lilist = xml.xpath('/html/body/ul/li')
     pre = xml.xpath('/html/body/pre')[0]
@@ -139,6 +154,11 @@ def parsehtmlpatch(htmlstr):
         if pre.text:
             msg += pre.text
         for n in pre.getchildren():
+            if link != None:
+                if "href" in n.keys():
+                    for i in n.items():
+                        if i[0] == "href":
+                            link.append(i[1])
             if n.text:
                 msg += n.text
             msg += n.tail

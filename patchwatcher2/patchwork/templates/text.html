@@ -9,7 +9,6 @@
        	<link rel="stylesheet" href="http://fabien-d.github.io/alertify.js/assets/js/lib/alertify/alertify.core.css" />
         <link rel="stylesheet" href="http://fabien-d.github.io/alertify.js/assets/js/lib/alertify/alertify.default.css" id="toggleCSS" />
 		<script src="http://fabien-d.github.io/alertify.js/assets/js/lib/alertify/alertify.min.js"></script>
-		<script src="//cdn.datatables.net/plug-ins/1.10.11/api/fnReloadAjax.js"></script>
     </head>
     <body>
         <script>
@@ -310,6 +309,10 @@
                         '<td>'+action+'</td>'+
                     '</tr>'+
                     '<tr>'+
+                        '<td>bugzilla:</td>'+
+                        '<td><a href="'+d.buglink+'">'+d.buglink+'</a></td>'+
+                    '</tr>'+
+                    '<tr>'+
                         '<td>testcase:</td>'+
                         '<td>'+action2+'</td>'+
                         '<td>update testplan:</td>'+
@@ -354,6 +357,17 @@
                             },
                             { "data": "group" },
                             { "data": "pushed" },
+                            {
+                                "data": "buglink",
+                                "render": function( data ) {
+                                    if (data == "N/A") {
+                                        return '<a>No</a>';
+                                    }
+                                    else {
+                                        return '<a>Yes</a>';
+                                    }
+                                }
+                            },
                             { "data": "feature" },
                             {
                                 "data": "patchlink",
@@ -394,6 +408,11 @@
                                             .draw();
                                     } );
                  
+                                if (['bugzilla'].indexOf(title) > -1) {
+                                    select.append('<option value="Yes">Yes</option>')
+                                    select.append('<option value="No">No</option>')
+                                    return
+                                }
                                 column.data().unique().sort().each( function ( d, j ) {
                                     select.append( '<option value="'+d+'">'+d+'</option>' )
                                 } );
@@ -428,6 +447,7 @@
                     <th>date</th>
                     <th>group info</th>
                     <th>pushed</th>
+                    <th>bugzilla</th>
                     <th>feature</th>
                     <th>patch link</th>
                     <th>testcase</th>
@@ -443,6 +463,7 @@
                     <th>date</th>
                     <th>group info</th>
                     <th>pushed</th>
+                    <th>bugzilla</th>
                     <th>feature</th>
                     <th>patch link</th>
                     <th>testcase</th>
