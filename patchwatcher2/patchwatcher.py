@@ -60,7 +60,7 @@ def updatepatchinfo(groupinfo, patchset, patchlink):
                 buglink = patchlink[n][4][0]
 
         try:
-            "Update buglink to exist item"
+            """Update buglink to exist item"""
             tmpdate = Dataset.objects.get(patchlink=patchlink[n][0])
             tmpdate.buglink=buglink
             tmpdate.save()
