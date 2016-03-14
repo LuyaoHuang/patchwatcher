@@ -169,7 +169,7 @@ def patchwatcher():
 
         try:
             groupinfo, patchset, patchlink, lastmsginfo = getmailwithdate(LIBVIR_LIST, start, end)
-        except TypeError, KeyError:
+        except Exception:
             time.sleep(600)
             continue
 
