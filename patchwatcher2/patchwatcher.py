@@ -59,6 +59,15 @@ def updatepatchinfo(groupinfo, patchset, patchlink):
             elif len(patchlink[n][4]) == 1:
                 buglink = patchlink[n][4][0]
 
+        try:
+            "Update buglink to exist item"
+            tmpdate = Dataset.objects.get(patchlink=patchlink[n][0])
+            tmpdate.buglink=buglink
+            tmpdate.save()
+            continue
+        except Exception:
+            pass
+
         Dataset.objects.create(name=n, desc=patchlink[n][1],
                                 group=group, patchlink=patchlink[n][0],
                                 author=patchlink[n][2],date=transtime(patchlink[n][3]),
