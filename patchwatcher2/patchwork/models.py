@@ -18,7 +18,7 @@ class Dataset(models.Model):
     testplan = models.CharField(max_length=10, default="ToDo" ,blank=True, null=True)
     feature = models.CharField(max_length=100, default="" ,blank=True, null=True)
     buglink = models.CharField(max_length=100, default="N/A" ,blank=True, null=True)
-    subpatch = models.ManyToManyField(Dataset)
+    subpatch = models.ManyToManyField("self")
 
 class currentwork(models.Model):
     date = models.CharField(max_length=10)

@@ -177,12 +177,18 @@ def parsehtmlpatch(htmlstr, link=None, urlheader=None):
             if tmpsubject[0] == '':
                 continue
             if patchsetn == 0:
-                patchsetn = tmpsubject[0].split('/')[1]
+                patchsetn = int(tmpsubject[0].split('/')[1])
+
+            if tmpsubject[0].split('/')[0] == '0':
+                logging.debug("%s is not the head of patchset, skip it" % subject)
+                retpatchset = {}
+                patchsetn = 0
+                break
+
             retpatchset[tmpsubject[1]] = '%s%s' % (urlheader, n.xpath('./@href')[0])
 
         if len(retpatchset) != int(patchsetn):
-            logging.info("cannot parse patchset %s, skip it" % subject)
-            retpatchset = {}
+            logging.warning("patch %s: subpatch number is not equal (%d != %d)" % (subject, len(retpatchset), int(patchsetn)))
 
     """ clean author info """
     author = author.split('<')[0]

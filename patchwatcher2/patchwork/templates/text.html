@@ -236,6 +236,18 @@
                     }
                 });
             }
+            function subpatchmanager( x ) {
+                var targetobj = document.getElementById("hidebox");
+
+                if (targetobj.style.display != "none") {
+                    targetobj.style.display="none";
+                    x.innerHTML = "open";
+                }
+                else {
+                    targetobj.style.display="block";
+                    x.innerHTML = "close";
+                }
+            }
             function format ( row ) {
                 d = row.data()
                 // `d` is the original data object for the row
@@ -247,6 +259,19 @@
                 var pushed = ''
                 var testplan = ''
                 var feature = ''
+                var subpatch = ''
+                $.each(d.subpatch, function(n, value) {
+                    subpatch += '<tr>'
+                    subpatch += '<td>'+value.name+'</td>'
+                    subpatch += '<td><a href="'+value.patchlink+'">link</a></td>'
+                    if (value.pushed == "Yes") {
+                        subpatch += '<td>pushed</td>'
+                    }
+                    else {
+                        subpatch += '<td>not pushed</td>'
+                    }
+                    subpatch += '</tr>'
+                });
                 action += '<select name="group" onChange="changegroup(this, \''+d.patchlink+'\', \''+d.group+'\')">'
                 $.each(["group1", "group2", "group3", "others"], function(n, value) {
                     action +=   '<option'
@@ -288,6 +313,7 @@
                 pushed +='</select>'
                 feature +='<input type="text" id="feature" value="'+d.feature+'" onblur="changefeature(this, \''+d.patchlink+'\', \''+d.feature+'\')"/>'
                 return '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
+                    '<tbody>'+
                     '<tr>'+
                         '<td>name:</td>'+
                         '<td>'+d.name+'</td>'+
@@ -336,7 +362,13 @@
                         '<td>comment:</td>'+
                         '<td>'+comment+'</td>'+
                     '</tr>'+
-                '</table>';
+                    '<tr>'+
+                        '<td>subpatch:</td>'+
+                        '<td><button onclick="subpatchmanager(this)">open</button></td>'+
+                    '</tr>'+
+                    '</tbody>'+
+                '</table>'+
+                '<table id="hidebox" style="padding-left:100px;display:none">'+subpatch+'</table>';
             }
 
             $(document).ready(function() {

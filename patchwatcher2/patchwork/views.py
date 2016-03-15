@@ -17,9 +17,20 @@ def index(request):
 def data(request):
     ret = []
     for n in Dataset.objects.all():
+        if len(n.subpatch.all()) == 1:
+            continue
         json_case = model_to_dict(n)
         json_case['date'] = json_case['date'].strftime("%Y-%m-%dT%H:%M:%S")
         json_case['name'] = cgi.escape(json_case['name']).encode('ascii', 'xmlcharrefreplace')
+
+        if len(n.subpatch.all()) > 1:
+            patchlist = []
+            for m in n.subpatch.all():
+                patchlist.append({'name': m.name,
+                                  'patchlink': m.patchlink,
+                                  'pushed': m.pushed})
+            json_case['subpatch'] = patchlist
+
         ret.append(json_case)
 
     return JsonResponse({'data': ret})

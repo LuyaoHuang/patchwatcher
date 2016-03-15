@@ -71,11 +71,12 @@ def updatepatchinfo(groupinfo, patchset, patchinfo):
                     testcase='N/A',testby='N/A',state='ToDo',buglink=buglink)
 
     for n in tmppatchset.keys():
+        checkpatchset = True
         name = tmppatchset[n][0]
         subpatch = tmppatchset[n][1]
         if name not in patchset.keys():
             logging.warning("cannot find %s in patchset" % name)
-            continue
+            checkpatchset = False
 
         try:
             item = Dataset.objects.get(patchlink=n)
@@ -84,9 +85,8 @@ def updatepatchinfo(groupinfo, patchset, patchinfo):
             continue
 
         for i in subpatch.keys():
-            if i not in patchset[name]:
+            if checkpatchset == True and i not in patchset[name]:
                 logging.warning("cannot find %s in patchset for %s" % (i, name))
-                continue
 
             try:
                 sitems = Dataset.objects.get(patchlink=subpatch[i])
@@ -169,7 +169,7 @@ def getmailwithdate(maillist, start, end, skipbz=True):
                                                         "desc" :getdescfrommsg(info[3]),
                                                         "author":info[1],
                                                         "date":info[2],
-                                                        "patchset":info[4]]}
+                                                        "patchset":info[4]}
                 lastmsginfo = ['%s-%s' % (year, month), str(msgid)]
 
     if lastmsginfo == start:
@@ -190,7 +190,7 @@ def getmailwithdate(maillist, start, end, skipbz=True):
     return result, patchset, patchinfo, lastmsginfo
 
 def patchwatcher():
-    start = ['2016-3', '00000']
+    start = ['2016-3', '00578']
     end = []
     count = 0
 
