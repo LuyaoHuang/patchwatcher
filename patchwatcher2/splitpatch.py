@@ -9,8 +9,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S',
-                    filename='patchwatcher.log',
-                    filemode='w')
+                    filename='patchwatcher.log')
 
 
 uselesslist = ['am','is','are','did','do', 'done','will','shall','would','should','to','on','for','at','in','we','i','my','mine','you','your','he','she','him','her','it',"it's",'however', 'which','where','of', 'the', 'a', 'an', 'about','above','under','after','by','with',"i'am","i'd","we're","they're"]

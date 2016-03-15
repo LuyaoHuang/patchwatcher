@@ -12,8 +12,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S',
-                    filename='patchwatcher.log',
-                    filemode='w')
+                    filename='patchwatcher.log')
 
 from splitpatch import splitpatchinternal
 from utils import *
@@ -36,15 +35,10 @@ def loaddateinfo():
         return
     return [date.date, date.msgid]
 
-def updatepatchinfo(groupinfo, patchset, patchlink):
-    skippatch = []
-    for n in patchset.values():
-        skippatch.extend(n)
-
+def updatepatchinfo(groupinfo, patchset, patchinfo):
+    tmppatchset = {}
     for n in groupinfo.keys():
-        if n in skippatch:
-            continue
-        if n not in patchlink.keys():
+        if n not in patchinfo.keys():
             raise ValueError, 'cannot find % link' % n
 
         if int(groupinfo[n][1]) < 4:
@@ -53,25 +47,54 @@ def updatepatchinfo(groupinfo, patchset, patchlink):
             group = 'others'
 
         buglink = "N/A"
-        if len(patchlink[n]) == 5:
-            if len(patchlink[n][4]) > 1:
-                buglink = genbuglist(patchlink[n][4])
-            elif len(patchlink[n][4]) == 1:
-                buglink = patchlink[n][4][0]
+        if "buglist" in patchinfo[n].keys():
+            if len(patchinfo[n]["buglist"]) > 1:
+                buglink = genbuglist(patchinfo[n]["buglist"])
+            elif len(patchinfo[n]["buglist"]) == 1:
+                buglink = patchinfo[n]["buglist"][0]
+
+        if patchinfo[n]["patchset"] != {}:
+            tmppatchset[patchinfo[n]["patchlink"]] = [n, patchinfo[n]["patchset"]]
 
         try:
             """Update buglink to exist item"""
-            tmpdate = Dataset.objects.get(patchlink=patchlink[n][0])
-            tmpdate.buglink=buglink
+            tmpdate = Dataset.objects.get(patchlink=patchinfo[n]["patchlink"])
+            tmpdate.buglink = buglink
             tmpdate.save()
             continue
         except Exception:
             pass
 
-        Dataset.objects.create(name=n, desc=patchlink[n][1],
-                                group=group, patchlink=patchlink[n][0],
-                                author=patchlink[n][2],date=transtime(patchlink[n][3]),
-                                testcase='N/A',testby='N/A',state='ToDo',buglink=buglink)
+        Dataset.objects.create(name=n, desc=patchinfo[n]["desc"],
+                    group=group, patchlink=patchinfo[n]["patchlink"],
+                    author=patchinfo[n]["author"],date=transtime(patchinfo[n]["date"]),
+                    testcase='N/A',testby='N/A',state='ToDo',buglink=buglink)
+
+    for n in tmppatchset.keys():
+        name = tmppatchset[n][0]
+        subpatch = tmppatchset[n][1]
+        if name not in patchset.keys():
+            logging.warning("cannot find %s in patchset" % name)
+            continue
+
+        try:
+            item = Dataset.objects.get(patchlink=n)
+        except Exception:
+            logging.warning("cannot find %s in db" % n)
+            continue
+
+        for i in subpatch.keys():
+            if i not in patchset[name]:
+                logging.warning("cannot find %s in patchset for %s" % (i, name))
+                continue
+
+            try:
+                sitems = Dataset.objects.get(patchlink=subpatch[i])
+            except Exception:
+                logging.warning("cannot find %s in db" % subpatch[i])
+                continue
+
+            item.subpatch.add(sitems)
 
 def parsedatemail(maillist, startdate, enddate, startmsgid):
     retdict = {}
@@ -126,7 +149,7 @@ def getmailwithdate(maillist, start, end, skipbz=True):
     maildict = parsedatemail(maillist, start[0], end[0], start[1])
     maildict2 = {}
     buglist = {}
-    patchlink = {}
+    patchinfo = {}
     lastmsginfo = start
     for year in maildict.keys():
         for month in maildict[year].keys():
@@ -134,15 +157,19 @@ def getmailwithdate(maillist, start, end, skipbz=True):
                 hreflist = []
                 link = genurlofpatch(maillist, year, month, msgid)
                 strings = getmaildata(link)
-                info = parsehtmlpatch(strings, hreflist)
+                info = parsehtmlpatch(strings, hreflist, genurlofpatchhead(maillist, year, month))
                 if skipbz:
-                    """ skip the patch which already have bz """
+                    """ record the patch which already have bz """
                     if "bugzilla.redhat.com" in info[3]:
-                        logging.info("skip a patch named %s it has bugzilla" % cleansubject(info[0])[1])
+                        logging.info("find a patch named %s it has bugzilla" % cleansubject(info[0])[1])
                         buglist[cleansubject(info[0])[1]] = hreflist
 
                 maildict2[cleansubject(info[0])[1]] = info[3]
-                patchlink[cleansubject(info[0])[1]] = [link, getdescfrommsg(info[3]), info[1], info[2]]
+                patchinfo[cleansubject(info[0])[1]] = { "patchlink" :link,
+                                                        "desc" :getdescfrommsg(info[3]),
+                                                        "author":info[1],
+                                                        "date":info[2],
+                                                        "patchset":info[4]]}
                 lastmsginfo = ['%s-%s' % (year, month), str(msgid)]
 
     if lastmsginfo == start:
@@ -153,14 +180,14 @@ def getmailwithdate(maillist, start, end, skipbz=True):
     for n in buglist.keys():
         for i in patchset.keys():
             if n in patchset[i]:
-                if len(patchlink[i]) == 5:
-                    patchlink[i][4].extend(buglist[n])
+                if "buglist" in patchinfo[i].keys():
+                    patchinfo[i]["buglist"].extend(buglist[n])
                 else:
-                    patchlink[i].append(buglist[n])
+                    patchinfo[i]["buglist"] = buglist[n]
 
-        patchlink[n].append(buglist[n])
+        patchinfo[n]["buglist"] = buglist[n]
 
-    return result, patchset, patchlink, lastmsginfo
+    return result, patchset, patchinfo, lastmsginfo
 
 def patchwatcher():
     start = ['2016-3', '00000']
@@ -177,13 +204,13 @@ def patchwatcher():
             start = loaddateinfo()
 
         try:
-            groupinfo, patchset, patchlink, lastmsginfo = getmailwithdate(LIBVIR_LIST, start, end)
+            groupinfo, patchset, patchinfo, lastmsginfo = getmailwithdate(LIBVIR_LIST, start, end)
         except Exception:
             time.sleep(600)
             continue
 
         logging.info("update %d patches" % len(groupinfo))
-        updatepatchinfo(groupinfo, patchset, patchlink)
+        updatepatchinfo(groupinfo, patchset, patchinfo)
         freshdateinfo(lastmsginfo)
         time.sleep(600)
 

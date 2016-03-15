@@ -14,8 +14,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S',
-                    filename='patchwatcher.log',
-                    filemode='w')
+                    filename='patchwatcher.log')
 
 
 group1 = ['src/storage/','src/qemu/qemu_blockjob.c']
@@ -73,7 +72,7 @@ def cleansubject(subject):
             info = n
             break
 
-    return [n, cleansubj]
+    return [info, cleansubj]
 
 def getdescfrommsg(msg):
     desc = ''
@@ -91,6 +90,9 @@ def genurloflist(maillist, date):
 
 def genurlofpatch(maillist, year, month, msgid):
     return "%s/%s-%s/msg%s.html" % (maillist, year, MONTH[str(month)], msgid)
+
+def genurlofpatchhead(maillist, year, month):
+    return "%s/%s-%s/" % (maillist, year, MONTH[str(month)])
 
 def getmaildata(link, timeout=None):
     tmpfile = '/tmp/%s' % link.split('/')[-1]
@@ -121,10 +123,12 @@ def getmaildata(link, timeout=None):
     os.remove(tmpfile)
     return ret
 
-def parsehtmlpatch(htmlstr, link=None):
+def parsehtmlpatch(htmlstr, link=None, urlheader=None):
     xml = etree.HTML(htmlstr)
     lilist = xml.xpath('/html/body/ul/li')
     pre = xml.xpath('/html/body/pre')[0]
+    ref = xml.xpath('/html/body/ul/li/ul/li/strong/a')
+    retpatchset = {}
 
     if not lilist:
         raise ValueError, "no li element in html file"
@@ -163,8 +167,26 @@ def parsehtmlpatch(htmlstr, link=None):
                 msg += n.text
             msg += n.tail
 
+    """ parse sub patches """
+    if urlheader != None:
+        patchsetn = 0
+        for n in ref:
+            if "Re:" in n.text:
+                continue
+            tmpsubject = cleansubject(n.text)
+            if tmpsubject[0] == '':
+                continue
+            if patchsetn == 0:
+                patchsetn = tmpsubject[0].split('/')[1]
+            retpatchset[tmpsubject[1]] = '%s%s' % (urlheader, n.xpath('./@href')[0])
+
+        if len(retpatchset) != int(patchsetn):
+            logging.info("cannot parse patchset %s, skip it" % subject)
+            retpatchset = {}
+
+    """ clean author info """
     author = author.split('<')[0]
-    return [subject, author, date, msg]
+    return [subject, author, date, msg, retpatchset]
 
 def getinfo(msg, detail=None, subpatch=None):
     retlist = []
@@ -278,4 +300,3 @@ def savedata(filepath, data):
 def loaddata(filepath):
     f1 = file(filepath, 'rb')  
     return pickle.load(f1)
-
