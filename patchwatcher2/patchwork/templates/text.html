@@ -236,8 +236,8 @@
                     }
                 });
             }
-            function subpatchmanager( x ) {
-                var targetobj = document.getElementById("hidebox");
+            function subpatchmanager( x, name ) {
+                var targetobj = document.getElementById(name);
 
                 if (targetobj.style.display != "none") {
                     targetobj.style.display="none";
@@ -260,6 +260,8 @@
                 var testplan = ''
                 var feature = ''
                 var subpatch = ''
+                var hidebox = 'hidebox'+d.name;
+
                 $.each(d.subpatch, function(n, value) {
                     subpatch += '<tr>'
                     subpatch += '<td>'+value.name+'</td>'
@@ -364,11 +366,11 @@
                     '</tr>'+
                     '<tr>'+
                         '<td>subpatch:</td>'+
-                        '<td><button onclick="subpatchmanager(this)">open</button></td>'+
+                        '<td><button onclick="subpatchmanager(this, \''+hidebox+'\')">open</button></td>'+
                     '</tr>'+
                     '</tbody>'+
                 '</table>'+
-                '<table id="hidebox" style="padding-left:100px;display:none">'+subpatch+'</table>';
+                '<table id="'+hidebox+'" style="padding-left:100px;display:none">'+subpatch+'</table>';
             }
 
             $(document).ready(function() {
