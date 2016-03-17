@@ -25,11 +25,17 @@ def data(request):
 
         if len(n.subpatch.all()) > 1:
             patchlist = []
+            allpushed = True
             for m in n.subpatch.all():
                 patchlist.append({'name': m.name,
                                   'patchlink': m.patchlink,
                                   'pushed': m.pushed})
+                if m.pushed == 'No':
+                    allpushed = False
+
             json_case['subpatch'] = patchlist
+            if allpushed:
+                json_case['pushed'] = 'Yes'
 
         ret.append(json_case)
 

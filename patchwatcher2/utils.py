@@ -306,3 +306,16 @@ def savedata(filepath, data):
 def loaddata(filepath):
     f1 = file(filepath, 'rb')  
     return pickle.load(f1)
+
+def downloadsourcecode(gitrepo):
+    cmd = "git clone %s" % (gitrepo)
+    output = subprocess.check_output(cmd.split(),stderr=STDOUT)
+    logging.debug("run cmd : %s" % cmd)
+    return output
+
+def getgitlog(srcdir, startdate, enddate):
+    os.chdir(srcdir)
+    cmd = ['git', 'log', '--since="%s"' % startdate, '--before="%s"' % enddate, '--pretty=oneline']
+    output = subprocess.check_output(cmd, stderr=STDOUT)
+    os.chdir("../")
+    return output

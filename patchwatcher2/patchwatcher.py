@@ -16,9 +16,10 @@ logging.basicConfig(level=logging.DEBUG,
 
 from splitpatch import splitpatchinternal
 from utils import *
-from patchwork.models import *
+from patchwork.models import Dataset,currentwork,Patchinfos
 
 LIBVIR_LIST = "https://www.redhat.com/archives/libvir-list"
+LIBVIRT_REPO = "git://libvirt.org/libvirt.git"
 
 def freshdateinfo(date):
     try:
@@ -189,6 +190,53 @@ def getmailwithdate(maillist, start, end, skipbz=True):
 
     return result, patchset, patchinfo, lastmsginfo
 
+def watchlibvirtrepo():
+    if not os.access("./libvirt", os.O_RDONLY):
+        logging.info("Cannot find libvirt source code")
+        logging.info("Download libvirt source code")
+        downloadsourcecode(LIBVIRT_REPO)
+        return watchlibvirtrepo()
+
+    if len(Patchinfos.objects.all()) == 0:
+        startdate = Dataset.objects.order_by("date")[0].date
+        enddate = Dataset.objects.order_by("-date")[0].date
+        logmsg = getgitlog("./libvirt", startdate, enddate)
+        for n in logmsg.splitlines():
+            tmplist = Dataset.objects.filter(name = n[n.find(" ")+1:])
+            for tmp in tmplist:
+                tmp.pushed = "Yes"
+                tmp.save()
+                logging.debug("update %s pushed status to yes" % tmp.name)
+
+        Patchinfos.objects.create(startdate=startdate, enddate=enddate)
+
+    else:
+        Patchinfo = Patchinfos.objects.all()[0]
+        startdate = Dataset.objects.order_by("date")[0].date
+        enddate = Dataset.objects.order_by("-date")[0].date
+        if startdate < Patchinfo.startdate:
+            logmsg = getgitlog("./libvirt", startdate, Patchinfo.startdate)
+            for n in logmsg.splitlines():
+                tmplist = Dataset.objects.filter(name = n[n.find(" ")+1:])
+                for tmp in tmplist:
+                    tmp.pushed = "Yes"
+                    tmp.save()
+                    logging.debug("update %s pushed status to yes" % tmp.name)
+
+            Patchinfo.startdate = startdate
+            Patchinfo.save()
+        if enddate > Patchinfo.enddate:
+            logmsg = getgitlog("./libvirt", Patchinfo.enddate, enddate)
+            for n in logmsg.splitlines():
+                tmplist = Dataset.objects.filter(name = n[n.find(" ")+1:])
+                for tmp in tmplist:
+                    tmp.pushed = "Yes"
+                    tmp.save()
+                    logging.debug("update %s pushed status to yes" % tmp.name)
+
+            Patchinfo.enddate = enddate
+            Patchinfo.save()
+
 def patchwatcher():
     start = ['2016-3', '00578']
     end = []
@@ -212,6 +260,7 @@ def patchwatcher():
         logging.info("update %d patches" % len(groupinfo))
         updatepatchinfo(groupinfo, patchset, patchinfo)
         freshdateinfo(lastmsginfo)
+        watchlibvirtrepo()
         time.sleep(600)
 
 if __name__ == '__main__':

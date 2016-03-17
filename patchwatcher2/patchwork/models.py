@@ -23,3 +23,7 @@ class Dataset(models.Model):
 class currentwork(models.Model):
     date = models.CharField(max_length=10)
     msgid = models.CharField(max_length=10)
+
+class Patchinfos(models.Model):
+    startdate = models.DateTimeField()
+    enddate = models.DateTimeField()

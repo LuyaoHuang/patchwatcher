@@ -82,6 +82,9 @@ def splitpatchinternal(maildict):
             group3=0
             group4=0
             for i in patchsethead[n]:
+                if i not in result.keys():
+                    continue
+
                 if result[i][1] == 4:
                     group4 += 1
                 if result[i][1] == 3:
