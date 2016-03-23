@@ -319,3 +319,10 @@ def getgitlog(srcdir, startdate, enddate):
     output = subprocess.check_output(cmd, stderr=STDOUT)
     os.chdir("../")
     return output
+
+def callgitpull(srcdir):
+    os.chdir(srcdir)
+    cmd = "git pull"
+    output = subprocess.check_output(cmd.split(), stderr=STDOUT)
+    os.chdir("../")
+    return output

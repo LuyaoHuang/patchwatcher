@@ -197,6 +197,7 @@ def watchlibvirtrepo():
         downloadsourcecode(LIBVIRT_REPO)
         return watchlibvirtrepo()
 
+    callgitpull("./libvirt")
     if len(Patchinfos.objects.all()) == 0:
         startdate = Dataset.objects.order_by("date")[0].date
         enddate = Dataset.objects.order_by("-date")[0].date
