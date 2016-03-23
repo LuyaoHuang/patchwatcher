@@ -197,10 +197,13 @@ def watchlibvirtrepo():
         downloadsourcecode(LIBVIRT_REPO)
         return watchlibvirtrepo()
 
-    callgitpull("./libvirt")
+    out = callgitpull("./libvirt")
+    if 'Already up-to-date.' in out:
+        return
+
     if len(Patchinfos.objects.all()) == 0:
         startdate = Dataset.objects.order_by("date")[0].date
-        enddate = Dataset.objects.order_by("-date")[0].date
+        enddate = currenttime()
         logmsg = getgitlog("./libvirt", startdate, enddate)
         for n in logmsg.splitlines():
             tmplist = Dataset.objects.filter(name = n[n.find(" ")+1:])
@@ -214,7 +217,7 @@ def watchlibvirtrepo():
     else:
         Patchinfo = Patchinfos.objects.all()[0]
         startdate = Dataset.objects.order_by("date")[0].date
-        enddate = Dataset.objects.order_by("-date")[0].date
+        enddate = currenttime()
         if startdate < Patchinfo.startdate:
             logmsg = getgitlog("./libvirt", startdate, Patchinfo.startdate)
             for n in logmsg.splitlines():

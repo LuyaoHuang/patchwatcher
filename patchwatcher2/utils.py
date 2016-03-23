@@ -9,6 +9,7 @@ import re
 import cPickle as pickle
 import os
 from dateutil import parser
+import time
 import logging
 
 logging.basicConfig(level=logging.DEBUG,
@@ -54,6 +55,9 @@ def genbuglist(buglist):
 
 def transtime(time):
     return parser.parse(time)
+
+def currenttime():
+    return parser.parse(time.ctime())
 
 def bakdb():
     cmd = "cp -f db.sqlite3 ./dbbak/"
