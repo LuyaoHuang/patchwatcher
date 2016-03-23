@@ -255,6 +255,7 @@ def patchwatcher():
         try:
             groupinfo, patchset, patchinfo, lastmsginfo = getmailwithdate(LIBVIR_LIST, start, end)
         except Exception:
+            watchlibvirtrepo()
             time.sleep(600)
             continue
 
