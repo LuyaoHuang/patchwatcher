@@ -197,10 +197,7 @@ def watchlibvirtrepo():
         downloadsourcecode(LIBVIRT_REPO)
         return watchlibvirtrepo()
 
-    out = callgitpull("./libvirt")
-    if 'Already up-to-date.' in out:
-        return
-
+    callgitpull("./libvirt")
     if len(Patchinfos.objects.all()) == 0:
         startdate = Dataset.objects.order_by("date")[0].date
         enddate = currenttime()
