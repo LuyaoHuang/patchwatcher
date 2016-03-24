@@ -57,7 +57,7 @@ def transtime(time):
     return parser.parse(time)
 
 def currenttime():
-    return parser.parse(time.ctime())
+    return parser.parse(time.ctime()).replace(tzinfo=None)
 
 def bakdb():
     cmd = "cp -f db.sqlite3 ./dbbak/"
