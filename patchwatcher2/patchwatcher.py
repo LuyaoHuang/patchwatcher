@@ -215,7 +215,7 @@ def watchlibvirtrepo():
         Patchinfo = Patchinfos.objects.all()[0]
         startdate = Dataset.objects.order_by("date")[0].date.replace(tzinfo=None)
         enddate = currenttime()
-        if startdate < Patchinfo.startdate:
+        if startdate < Patchinfo.startdate.replace(tzinfo=None):
             logmsg = getgitlog("./libvirt", startdate, Patchinfo.startdate)
             for n in logmsg.splitlines():
                 tmplist = Dataset.objects.filter(name = n[n.find(" ")+1:])
@@ -226,7 +226,7 @@ def watchlibvirtrepo():
 
             Patchinfo.startdate = startdate
             Patchinfo.save()
-        if enddate > Patchinfo.enddate:
+        if enddate > Patchinfo.enddate.replace(tzinfo=None):
             logmsg = getgitlog("./libvirt", Patchinfo.enddate, enddate)
             for n in logmsg.splitlines():
                 tmplist = Dataset.objects.filter(name = n[n.find(" ")+1:])
