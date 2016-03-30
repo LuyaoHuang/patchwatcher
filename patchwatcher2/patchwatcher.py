@@ -122,7 +122,7 @@ def parsedatemail(maillist, startdate, enddate, startmsgid):
                 for li in n.getchildren():
                     tmpmsgid = li.getchildren()[0].get('name')
                     patchname = li.getchildren()[0].text
-                    if patchname[:3] == 'Re:' or patchname.find('PATCH') < 0:
+                    if "Re:" in patchname or "PATCH" not in patchname:
                         continue
 
                     if firstmonth:
