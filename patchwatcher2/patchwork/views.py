@@ -22,6 +22,7 @@ def data(request):
         json_case = model_to_dict(n)
         json_case['date'] = json_case['date'].strftime("%Y-%m-%dT%H:%M:%S")
         json_case['name'] = cgi.escape(json_case['name']).encode('ascii', 'xmlcharrefreplace')
+        json_case['desc'] = cgi.escape(json_case['desc']).encode('ascii', 'xmlcharrefreplace')
 
         if len(n.subpatch.all()) > 1:
             patchlist = []
