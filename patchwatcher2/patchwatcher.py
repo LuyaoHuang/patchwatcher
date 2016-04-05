@@ -190,7 +190,7 @@ def getmailwithdate(maillist, start, end, skipbz=True):
 
     return result, patchset, patchinfo, lastmsginfo
 
-def watchlibvirtrepo():
+def watchlibvirtrepo(checkall=False):
     if not os.access("./libvirt", os.O_RDONLY):
         logging.info("Cannot find libvirt source code")
         logging.info("Download libvirt source code")
@@ -215,6 +215,19 @@ def watchlibvirtrepo():
         Patchinfo = Patchinfos.objects.all()[0]
         startdate = Dataset.objects.order_by("date")[0].date.replace(tzinfo=None)
         enddate = currenttime()
+        if checkall:
+            logmsg = getgitlog("./libvirt", startdate, enddate)
+            for n in logmsg.splitlines():
+                tmplist = Dataset.objects.filter(name = n[n.find(" ")+1:])
+                for tmp in tmplist:
+                    tmp.pushed = "Yes"
+                    tmp.save()
+                    logging.debug("update %s pushed status to yes" % tmp.name)
+
+            Patchinfo.startdate = startdate
+            Patchinfo.enddate = enddate
+            Patchinfo.save()
+
         if startdate < Patchinfo.startdate.replace(tzinfo=None):
             logmsg = getgitlog("./libvirt", startdate, Patchinfo.startdate)
             for n in logmsg.splitlines():
@@ -242,6 +255,7 @@ def patchwatcher():
     start = ['2016-3', '00578']
     end = []
     count = 0
+    firstinit=True
 
     while 1:
         count += 1
@@ -255,15 +269,17 @@ def patchwatcher():
         try:
             groupinfo, patchset, patchinfo, lastmsginfo = getmailwithdate(LIBVIR_LIST, start, end)
         except Exception:
-            watchlibvirtrepo()
+            watchlibvirtrepo(firstinit)
             time.sleep(600)
+            firstinit=False
             continue
 
         logging.info("update %d patches" % len(groupinfo))
         updatepatchinfo(groupinfo, patchset, patchinfo)
         freshdateinfo(lastmsginfo)
-        watchlibvirtrepo()
+        watchlibvirtrepo(firstinit)
         time.sleep(600)
+        firstinit=False
 
 if __name__ == '__main__':
     patchwatcher()
