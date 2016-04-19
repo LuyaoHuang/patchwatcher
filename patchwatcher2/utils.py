@@ -66,7 +66,8 @@ def bakdb():
 
 def cleansubject(subject):
     if "PATCH" not in subject:
-        raise ValueError, "no PATCH in subject"
+        cleansubj = subject.split(']')[-1][1:]
+        return ['', cleansubj]
 
     tmpstr = subject[subject.find("PATCH"):]
     cleansubj = tmpstr[tmpstr.find(']') + 2:]
