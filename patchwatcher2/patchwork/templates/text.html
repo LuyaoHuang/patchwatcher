@@ -12,8 +12,8 @@
     </head>
     <body>
         <script>
-            function changegroup( osel, link, group ) {
-                var table = $('#sortable-table').DataTable();
+            function changegroup( osel, link, group, id ) {
+                var table = $('#sortable-table').dataTable();
                 var newgroup = osel.options[osel.selectedIndex].text;
                 var r = alertify.confirm('Update group from '+group+' to '+newgroup+' ?', function (e) {
                     if (e) {
@@ -28,6 +28,7 @@
                             function ( response ) {
                                 if (response.ret == 0) {
                                     alertify.alert("Updated success");
+                                    table.fnUpdate(newgroup, id, 3 );
                                 }
                                 else {
                                     alertify.alert("Updated failed: group already been updated");
@@ -40,11 +41,9 @@
                     }
                 } );
             }
-            function changetestcase(x, link, testcase ) {
-                var table = $('#sortable-table').DataTable();
+            function changetestcase(x, link, testcase, id ) {
+                var table = $('#sortable-table').dataTable();
                 var value = x.value
-                console.log(testcase)
-                console.log(value)
                 if (value == testcase) {
                     return
                 }
@@ -61,6 +60,7 @@
                             function ( response ) {
                                 if (response.ret == 0) {
                                     alertify.alert("Updated success");
+                                    table.fnUpdate(value, id, 8 );
                                 }
                                 else {
                                     alertify.alert("Updated failed: testcase already been updated");
@@ -93,8 +93,8 @@
                     }
                 );
             }
-            function changetestby(x, link, testby ) {
-                var table = $('#sortable-table').DataTable();
+            function changetestby(x, link, testby, id ) {
+                var table = $('#sortable-table').dataTable();
                 var value = x.value
                 if (value == testby) {
                     return
@@ -112,6 +112,7 @@
                             function ( response ) {
                                 if (response.ret == 0) {
                                     alertify.alert("Updated success");
+                                    table.fnUpdate(value, id, 10 );
                                 }
                                 else {
                                     alertify.alert("Updated failed: testby already been updated");
@@ -121,8 +122,8 @@
                     }
                 });
             }
-            function changestate( osel, link, state ) {
-                var table = $('#sortable-table').DataTable();
+            function changestate( osel, link, state, id ) {
+                var table = $('#sortable-table').dataTable();
                 var newstate = osel.options[osel.selectedIndex].text;
                 var r = alertify.confirm('Update group from '+state+' to '+newstate+' ?', function (e) {
                     if (e) {
@@ -137,6 +138,7 @@
                             function ( response ) {
                                 if (response.ret == 0) {
                                     alertify.alert("Updated success");
+                                    table.fnUpdate(newstate, id, 11 );
                                 }
                                 else {
                                     alertify.alert("Updated failed: state already been updated");
@@ -149,8 +151,8 @@
                     }
                 });
             }
-            function changepushed( osel, link, pushed ) {
-                var table = $('#sortable-table').DataTable();
+            function changepushed( osel, link, pushed, id ) {
+                var table = $('#sortable-table').dataTable();
                 var newpushed = osel.options[osel.selectedIndex].text;
                 var r = alertify.confirm('Update pushed status from '+pushed+' to '+newpushed+' ?', function (e) {
                     if (e) {
@@ -165,6 +167,7 @@
                             function ( response ) {
                                 if (response.ret == 0) {
                                     alertify.alert("Updated success");
+                                    table.fnUpdate(newpushed, id, 4 );
                                 }
                                 else {
                                     alertify.alert("Updated failed: pushed status already been updated");
@@ -177,8 +180,8 @@
                     }
                 });
             }
-            function changetestplan( osel, link, testplan ) {
-                var table = $('#sortable-table').DataTable();
+            function changetestplan( osel, link, testplan, id ) {
+                var table = $('#sortable-table').dataTable();
                 var newtestplan = osel.options[osel.selectedIndex].text;
                 var r = alertify.confirm('Update testplan update status from '+testplan+' to '+newtestplan+' ?', function (e) {
                     if (e) {
@@ -193,6 +196,7 @@
                             function ( response ) {
                                 if (response.ret == 0) {
                                     alertify.alert("Updated success");
+                                    table.fnUpdate(newtestplan, id, 9 );
                                 }
                                 else {
                                     alertify.alert("Updated failed: testplan status already been updated");
@@ -205,8 +209,8 @@
                     }
                 });
             }
-            function changefeature( x, link, feature ) {
-                var table = $('#sortable-table').DataTable();
+            function changefeature( x, link, feature, id ) {
+                var table = $('#sortable-table').dataTable();
                 var newfeature = x.value
                 if (newfeature == feature) {
                     return
@@ -224,6 +228,7 @@
                             function ( response ) {
                                 if (response.ret == 0) {
                                     alertify.alert("Updated success");
+                                    table.fnUpdate(newfeature, id, 6 );
                                 }
                                 else {
                                     alertify.alert("Updated failed: feature status already been updated");
@@ -249,7 +254,8 @@
                 }
             }
             function format ( row ) {
-                d = row.data()
+                d = row.data();
+                id = row.index();
                 // `d` is the original data object for the row
                 var action = ''
                 var action2 = ''
@@ -274,7 +280,7 @@
                     }
                     subpatch += '</tr>'
                 });
-                action += '<select name="group" onChange="changegroup(this, \''+d.patchlink+'\', \''+d.group+'\')">'
+                action += '<select name="group" onChange="changegroup(this, \''+d.patchlink+'\', \''+d.group+'\', \''+id+'\')">'
                 $.each(["group1", "group2", "group3", "others"], function(n, value) {
                     action +=   '<option'
                     if (d.group == value) {
@@ -283,9 +289,9 @@
                     action +=   ' value="'+value+'">'+value+'</option>'
                 });
                 action +='</select>'
-                action2 +='<input type="text" id="testcase" value="'+d.testcase+'" onblur="changetestcase(this, \''+d.patchlink+'\', \''+d.testcase+'\')"/>'
-                action3 +='<input type="text" id="testby" value="'+d.testby+'" onblur="changetestby(this, \''+d.patchlink+'\', \''+d.testby+'\')"/>'
-                action4 += '<select name="state" onChange="changestate(this, \''+d.patchlink+'\', \''+d.state+'\')">'
+                action2 +='<input type="text" id="testcase" value="'+d.testcase+'" onblur="changetestcase(this, \''+d.patchlink+'\', \''+d.testcase+'\', \''+id+'\')"/>'
+                action3 +='<input type="text" id="testby" value="'+d.testby+'" onblur="changetestby(this, \''+d.patchlink+'\', \''+d.testby+'\', \''+id+'\')"/>'
+                action4 += '<select name="state" onChange="changestate(this, \''+d.patchlink+'\', \''+d.state+'\', \''+id+'\')">'
                 $.each(["ToDo", "Pass", "NACK", "Fail", "untestable", "pending"], function(n, value) {
                     action4 +=   '<option'
                     if (d.state == value) {
@@ -295,7 +301,7 @@
                 });
                 action4 +='</select>'
                 comment +='<textarea id="comment" cols="100" rows="10" onblur="changecomment(this, \''+d.patchlink+'\', \''+d.comment+'\')">'+d.comment+'</textarea>'
-                testplan += '<select name="testplan" onChange="changetestplan(this, \''+d.patchlink+'\', \''+d.testplan+'\')">'
+                testplan += '<select name="testplan" onChange="changetestplan(this, \''+d.patchlink+'\', \''+d.testplan+'\', \''+id+'\')">'
                 $.each(["ToDo", "Done",], function(n, value) {
                     testplan +=   '<option'
                     if (d.testplan == value) {
@@ -304,7 +310,7 @@
                     testplan +=   ' value="'+value+'">'+value+'</option>'
                 });
                 testplan +='</select>'
-                pushed += '<select name="pushed" onChange="changepushed(this, \''+d.patchlink+'\', \''+d.pushed+'\')">'
+                pushed += '<select name="pushed" onChange="changepushed(this, \''+d.patchlink+'\', \''+d.pushed+'\', \''+id+'\')">'
                 $.each(["Yes", "No",], function(n, value) {
                     pushed +=   '<option'
                     if (d.pushed == value) {
@@ -313,7 +319,7 @@
                     pushed +=   ' value="'+value+'">'+value+'</option>'
                 });
                 pushed +='</select>'
-                feature +='<input type="text" id="feature" value="'+d.feature+'" onblur="changefeature(this, \''+d.patchlink+'\', \''+d.feature+'\')"/>'
+                feature +='<input type="text" id="feature" value="'+d.feature+'" onblur="changefeature(this, \''+d.patchlink+'\', \''+d.feature+'\', \''+id+'\')"/>'
                 return '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
                     '<tbody>'+
                     '<tr>'+
@@ -461,7 +467,6 @@
                         if ( row.child.isShown() ) {
                             // This row is already open - close it
                             row.child.hide();
-                            table.ajax.reload(null,false);
                             tr.removeClass('shown');
                         }
                         else {
