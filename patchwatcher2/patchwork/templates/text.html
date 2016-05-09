@@ -28,7 +28,7 @@
                             function ( response ) {
                                 if (response.ret == 0) {
                                     alertify.alert("Updated success");
-                                    table.fnUpdate(newgroup, id, 3 );
+                                    table.fnUpdate(newgroup, id, 3, false);
                                 }
                                 else {
                                     alertify.alert("Updated failed: group already been updated");
@@ -60,7 +60,7 @@
                             function ( response ) {
                                 if (response.ret == 0) {
                                     alertify.alert("Updated success");
-                                    table.fnUpdate(value, id, 8 );
+                                    table.fnUpdate(value, id, 8, false );
                                 }
                                 else {
                                     alertify.alert("Updated failed: testcase already been updated");
@@ -112,7 +112,7 @@
                             function ( response ) {
                                 if (response.ret == 0) {
                                     alertify.alert("Updated success");
-                                    table.fnUpdate(value, id, 10 );
+                                    table.fnUpdate(value, id, 10, false );
                                 }
                                 else {
                                     alertify.alert("Updated failed: testby already been updated");
@@ -138,7 +138,7 @@
                             function ( response ) {
                                 if (response.ret == 0) {
                                     alertify.alert("Updated success");
-                                    table.fnUpdate(newstate, id, 11 );
+                                    table.fnUpdate(newstate, id, 11, false );
                                 }
                                 else {
                                     alertify.alert("Updated failed: state already been updated");
@@ -167,7 +167,7 @@
                             function ( response ) {
                                 if (response.ret == 0) {
                                     alertify.alert("Updated success");
-                                    table.fnUpdate(newpushed, id, 4 );
+                                    table.fnUpdate(newpushed, id, 4, false );
                                 }
                                 else {
                                     alertify.alert("Updated failed: pushed status already been updated");
@@ -196,7 +196,7 @@
                             function ( response ) {
                                 if (response.ret == 0) {
                                     alertify.alert("Updated success");
-                                    table.fnUpdate(newtestplan, id, 9 );
+                                    table.fnUpdate(newtestplan, id, 9, false );
                                 }
                                 else {
                                     alertify.alert("Updated failed: testplan status already been updated");
@@ -228,7 +228,7 @@
                             function ( response ) {
                                 if (response.ret == 0) {
                                     alertify.alert("Updated success");
-                                    table.fnUpdate(newfeature, id, 6 );
+                                    table.fnUpdate(newfeature, id, 6, false );
                                 }
                                 else {
                                     alertify.alert("Updated failed: feature status already been updated");
