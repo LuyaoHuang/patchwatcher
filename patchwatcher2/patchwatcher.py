@@ -36,16 +36,21 @@ def loaddateinfo():
         return
     return [date.date, date.msgid]
 
-def fixbreakpatchset(patchlink):
+def fixbreakpatchset(patchlink, fullcheck=False):
     ext = None
+    new = None
     try:
-        obj = Dataset.objects.get(patchlink=patchlink)
-        return obj
+        new = Dataset.objects.get(patchlink=patchlink)
+        if not fullcheck:
+            return new
     except Exception:
         logging.warning("cannot find %s in db, try to fix it" % patchlink)
-        strings = getmaildata(patchlink)
-        header = patchlink[:patchlink.find("msg")]
-        info = parsehtmlpatch(strings, urlheader=header)
+
+    strings = getmaildata(patchlink)
+    header = patchlink[:patchlink.find("msg")]
+    info = parsehtmlpatch(strings, urlheader=header)
+
+    if not new:
         try:
             ext = Dataset.objects.get(name=cleansubject(info[0])[1])
         except:
@@ -57,25 +62,25 @@ def fixbreakpatchset(patchlink):
                     testcase='N/A',testby='N/A',state='ToDo',buglink="N/A")
         logging.info("create a new obj in db which link is %s" % patchlink)
 
-        if ext:
-            new.group = ext.group
-            new.save()
+    if ext:
+        new.group = ext.group
+        new.save()
 
-        for i in info[4]["Follow-Ups"].keys():
-            sitems = fixbreakpatchset(info[4]["Follow-Ups"][i])
-            if not sitems:
-                continue
+    for i in info[4]["Follow-Ups"].keys():
+        sitems = fixbreakpatchset(info[4]["Follow-Ups"][i])
+        if not sitems:
+            continue
 
-            new.subpatch.add(sitems)
+        new.subpatch.add(sitems)
 
-        for i in info[4]["References"].keys():
-            sitems = fixbreakpatchset(info[4]["References"][i])
-            if not sitems:
-                continue
+    for i in info[4]["References"].keys():
+        sitems = fixbreakpatchset(info[4]["References"][i])
+        if not sitems:
+            continue
 
-            new.subpatch.add(sitems)
+        new.subpatch.add(sitems)
 
-        return new
+    return new
 
 
 def updatepatchinfo(groupinfo, patchset, patchinfo):
