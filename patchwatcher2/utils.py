@@ -132,8 +132,8 @@ def parsehtmlpatch(htmlstr, link=None, urlheader=None):
     xml = etree.HTML(htmlstr)
     lilist = xml.xpath('/html/body/ul/li')
     pre = xml.xpath('/html/body/pre')[0]
-    ref = xml.xpath('/html/body/ul/li/ul/li/strong/a')
-    retpatchset = {}
+    ref = xml.xpath('/html/body/ul/li/strong')
+    retpatchset = {"Follow-Ups": {}, "References": {}}
 
     if not lilist:
         raise ValueError, "no li element in html file"
@@ -176,24 +176,42 @@ def parsehtmlpatch(htmlstr, link=None, urlheader=None):
     if urlheader != None:
         patchsetn = 0
         for n in ref:
-            if "Re:" in n.text:
-                continue
-            tmpsubject = cleansubject(n.text)
-            if tmpsubject[0] == '':
-                continue
-            if patchsetn == 0:
-                patchsetn = int(tmpsubject[0].split('/')[1])
+            if n.text == "Follow-Ups":
+                for m in n.getparent().xpath('./ul/li/strong/a'):
+                    if "Re:" in m.text:
+                        continue
+                    tmpsubject = cleansubject(m.text)
+                    if tmpsubject[0] == '':
+                        continue
+                    if patchsetn == 0:
+                        patchsetn = int(tmpsubject[0].split('/')[1])
 
-            if tmpsubject[0].split('/')[0] == '0':
-                logging.debug("%s is not the head of patchset, skip it" % subject)
-                retpatchset = {}
-                patchsetn = 0
-                break
+                    if tmpsubject[0].split('/')[0] == '0':
+                        logging.debug("%s is not the head of patchset, skip it" % subject)
+                        retpatchset = {"Follow-Ups": {}, "References": {}}
+                        patchsetn = 0
+                        break
 
-            retpatchset[tmpsubject[1]] = '%s%s' % (urlheader, n.xpath('./@href')[0])
+                    retpatchset["Follow-Ups"][tmpsubject[1]] = '%s%s' % (urlheader, m.xpath('./@href')[0])
 
-        if len(retpatchset) != int(patchsetn):
-            logging.warning("patch %s: subpatch number is not equal (%d != %d)" % (subject, len(retpatchset), int(patchsetn)))
+                if len(retpatchset["Follow-Ups"]) != int(patchsetn):
+                    logging.warning("patch %s: subpatch number is not equal (%d != %d)" % (subject, len(retpatchset["Follow-Ups"]), int(patchsetn)))
+
+            if n.text == "References":
+                for m in n.getparent().xpath('./ul/li/strong/a'):
+                    if "Re:" in m.text:
+                        continue
+                    tmpsubject = cleansubject(m.text)
+                    tmpsubject2 = cleansubject(subject)
+                    if tmpsubject2[0] == '':
+                        logging.warning("cannot get %s patch index" % subject)
+                        continue
+                    if int(tmpsubject2[0].split('/')[1]) == 0:
+                        logging.warning("Hit a strange patch named %s" % subject)
+
+                    retpatchset["References"][tmpsubject[1]] = '%s%s' % (urlheader, m.xpath('./@href')[0])
+                    if len(retpatchset["References"]) > 1:
+                        logging.warning("Hit a strange patch named %s" % subject)
 
     """ clean author info """
     author = author.split('<')[0]
@@ -331,3 +349,16 @@ def callgitpull(srcdir):
     output = subprocess.check_output(cmd.split(), stderr=STDOUT)
     os.chdir("../")
     return output
+
+def testparsehtmlpatch(maillink=None):
+    if maillink == None:
+        maillink = "https://www.redhat.com/archives/libvir-list/2015-April/msg01484.html"
+    link = []
+    date = maillink.split("/")[-2]
+    strings = getmaildata(maillink)
+    info = parsehtmlpatch(strings, link, "http://test/")
+    print info
+    print ""
+    print link
+
+

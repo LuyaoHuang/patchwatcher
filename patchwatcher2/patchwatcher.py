@@ -36,6 +36,48 @@ def loaddateinfo():
         return
     return [date.date, date.msgid]
 
+def fixbreakpatchset(patchlink):
+    ext = None
+    try:
+        obj = Dataset.objects.get(patchlink=patchlink)
+        return obj
+    except Exception:
+        logging.warning("cannot find %s in db, try to fix it" % patchlink)
+        strings = getmaildata(patchlink)
+        header = patchlink[:patchlink.find("msg")]
+        info = parsehtmlpatch(strings, urlheader=header)
+        try:
+            ext = Dataset.objects.get(name=cleansubject(info[0])[1])
+        except:
+            pass
+
+        new = Dataset.objects.create(name=cleansubject(info[0])[1], desc=getdescfrommsg(info[3]),
+                    group="others", patchlink=patchlink,
+                    author=info[1],date=transtime(info[2]),
+                    testcase='N/A',testby='N/A',state='ToDo',buglink="N/A")
+        logging.info("create a new obj in db which link is %s" % patchlink)
+
+        if ext:
+            new.group = ext.group
+            new.save()
+
+        for i in info[4]["Follow-Ups"].keys():
+            sitems = fixbreakpatchset(info[4]["Follow-Ups"][i])
+            if not sitems:
+                continue
+
+            new.subpatch.add(sitems)
+
+        for i in info[4]["References"].keys():
+            sitems = fixbreakpatchset(info[4]["References"][i])
+            if not sitems:
+                continue
+
+            new.subpatch.add(sitems)
+
+        return new
+
+
 def updatepatchinfo(groupinfo, patchset, patchinfo):
     tmppatchset = {}
     for n in groupinfo.keys():
@@ -54,7 +96,8 @@ def updatepatchinfo(groupinfo, patchset, patchinfo):
             elif len(patchinfo[n]["buglist"]) == 1:
                 buglink = patchinfo[n]["buglist"][0]
 
-        if patchinfo[n]["patchset"] != {}:
+        if patchinfo[n]["patchset"]["Follow-Ups"] != {} \
+                or patchinfo[n]["patchset"]["References"] != {}:
             tmppatchset[patchinfo[n]["patchlink"]] = [n, patchinfo[n]["patchset"]]
 
         try:
@@ -85,14 +128,22 @@ def updatepatchinfo(groupinfo, patchset, patchinfo):
             logging.warning("cannot find %s in db" % n)
             continue
 
-        for i in subpatch.keys():
+        for i in subpatch["Follow-Ups"].keys():
             if checkpatchset == True and i not in patchset[name]:
                 logging.warning("cannot find %s in patchset for %s" % (i, name))
 
-            try:
-                sitems = Dataset.objects.get(patchlink=subpatch[i])
-            except Exception:
-                logging.warning("cannot find %s in db" % subpatch[i])
+            sitems = fixbreakpatchset(subpatch["Follow-Ups"][i])
+            if not sitems:
+                continue
+
+            item.subpatch.add(sitems)
+
+        for i in subpatch["References"].keys():
+            if checkpatchset == True and i not in patchset[name]:
+                logging.warning("cannot find %s in patchset for %s" % (i, name))
+
+            sitems = fixbreakpatchset(subpatch["References"][i])
+            if not sitems:
                 continue
 
             item.subpatch.add(sitems)
@@ -252,7 +303,7 @@ def watchlibvirtrepo(checkall=False):
             Patchinfo.save()
 
 def patchwatcher():
-    start = ['2016-3', '00578']
+    start = ['2016-5', '00410']
     end = []
     count = 0
     firstinit=True
