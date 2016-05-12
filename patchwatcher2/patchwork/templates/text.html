@@ -70,6 +70,39 @@
                     }
                 });
             }
+            function changebuglink(x, link, bug, id ) {
+                var table = $('#sortable-table').dataTable();
+                var value = x.value
+                if (value == bug) {
+                    return
+                }
+                alertify.confirm('Update buglink from '+bug+' to '+value+' ?',function(evt) {
+                    if (evt) {
+                        $.post(
+                            "updatebuglink",
+                            {
+                                'csrfmiddlewaretoken': '{{ csrf_token }}',
+                                'link': link,
+                                'newbuglink': value,
+                                'oldbuglink': bug,
+                            },
+                            function ( response ) {
+                                if (response.ret == 0) {
+                                    alertify.alert("Updated success");
+                                    if (value == "") {
+                                        table.fnUpdate("N/A", id, 5, false );
+                                    } else {
+                                        table.fnUpdate(value, id, 5, false );
+                                    }
+                                }
+                                else {
+                                    alertify.alert("Updated failed: buglink already been updated");
+                                }
+                            }
+                        );
+                    }
+                });
+            }
             function changecomment(x, link, comment ) {
                 var table = $('#sortable-table').dataTable();
                 var value = x.value
@@ -266,6 +299,7 @@
                 var testplan = ''
                 var feature = ''
                 var subpatch = ''
+                var buglink = ''
                 var hidebox = 'hidebox'+d.patchlink;
 
                 $.each(d.subpatch, function(n, value) {
@@ -320,6 +354,7 @@
                 });
                 pushed +='</select>'
                 feature +='<input type="text" id="feature" value="'+d.feature+'" onblur="changefeature(this, \''+d.patchlink+'\', \''+d.feature+'\', \''+id+'\')"/>'
+                buglink +='<input type="text" id="buglink" size="50" value="'+d.buglink+'" onblur="changebuglink(this, \''+d.patchlink+'\', \''+d.buglink+'\', \''+id+'\')"/>'
                 return '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
                     '<tbody>'+
                     '<tr>'+
@@ -344,7 +379,7 @@
                     '</tr>'+
                     '<tr>'+
                         '<td>bugzilla:</td>'+
-                        '<td><a href="'+d.buglink+'">'+d.buglink+'</a></td>'+
+                        '<td>'+buglink+'</td>'+
                     '</tr>'+
                     '<tr>'+
                         '<td>testcase:</td>'+

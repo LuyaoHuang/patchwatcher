@@ -150,3 +150,18 @@ def updatefeature(request):
         data.save()
 
     return JsonResponse({'ret': 0})
+
+def updatebuglink(request):
+    link = request.POST.get('link')
+    newbuglink = request.POST.get('newbuglink')
+    oldbuglink = request.POST.get('oldbuglink')
+
+    data = Dataset.objects.get(patchlink=link)
+    if data.buglink != oldbuglink:
+        return JsonResponse({'ret': 1})
+    else:
+        data.buglink = newbuglink
+        data.save()
+
+    return JsonResponse({'ret': 0})
+
