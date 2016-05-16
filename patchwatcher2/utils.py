@@ -181,16 +181,16 @@ def parsehtmlpatch(htmlstr, link=None, urlheader=None):
                     if "Re:" in m.text:
                         continue
                     tmpsubject = cleansubject(m.text)
-                    if tmpsubject[0] == '':
-                        continue
-                    if patchsetn == 0:
-                        patchsetn = int(tmpsubject[0].split('/')[1])
+                    if tmpsubject[0] != '':
+                        if patchsetn == 0:
+                            patchsetn = int(tmpsubject[0].split('/')[1])
 
-                    if tmpsubject[0].split('/')[0] == '0':
-                        logging.debug("%s is not the head of patchset, skip it" % subject)
-                        retpatchset = {"Follow-Ups": {}, "References": {}}
-                        patchsetn = 0
-                        break
+                        if tmpsubject[0].split('/')[0] == '0':
+                            #should not happen
+                            logging.debug("%s is not the head of patchset, skip it" % subject)
+                            retpatchset = {"Follow-Ups": {}, "References": {}}
+                            patchsetn = 0
+                            break
 
                     retpatchset["Follow-Ups"][tmpsubject[1]] = '%s%s' % (urlheader, m.xpath('./@href')[0])
 
@@ -205,8 +205,7 @@ def parsehtmlpatch(htmlstr, link=None, urlheader=None):
                     tmpsubject2 = cleansubject(subject)
                     if tmpsubject2[0] == '':
                         logging.warning("cannot get %s patch index" % subject)
-                        continue
-                    if int(tmpsubject2[0].split('/')[1]) == 0:
+                    elif int(tmpsubject2[0].split('/')[1]) == 0:
                         logging.warning("Hit a strange patch named %s" % subject)
 
                     retpatchset["References"][tmpsubject[1]] = '%s%s' % (urlheader, m.xpath('./@href')[0])
