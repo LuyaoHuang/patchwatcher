@@ -277,7 +277,13 @@ def getinfo(msg, detail=None, subpatch=None):
                     subpatch.append(line[2:])
                 else:
                     """ it is a part of last patch name"""
-                    tmpstr = subpatch.pop()
+                    try:
+                        tmpstr = subpatch.pop()
+                    except IndexError:
+                        """ we get a unexcept case, stop parse it """
+                        logging.warning("Fail to get subpatch info")
+                        subpatch = []
+                        break
                     subpatch.append('%s%s' % (tmpstr, line[3:]))
 
     return retlist

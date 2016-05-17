@@ -8,6 +8,7 @@ django.setup()
 import time
 import lxml.etree as etree
 import logging
+import traceback
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
@@ -324,7 +325,9 @@ def patchwatcher():
 
         try:
             groupinfo, patchset, patchinfo, lastmsginfo = getmailwithdate(LIBVIR_LIST, start, end)
-        except Exception:
+        except Exception, e:
+            logging.info("Exception: %s" % e)
+            print traceback.format_exc()
             watchlibvirtrepo(firstinit)
             time.sleep(600)
             firstinit=False
