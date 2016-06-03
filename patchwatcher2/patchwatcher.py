@@ -199,12 +199,12 @@ def parsedatemail(maillist, startdate, enddate, startmsgid):
 
     return retdict
 
-def getmailwithdate(maillist, start, end, skipbz=True):
-    if end == []:
+def getmailwithdate(maillist, start, end=None, skipbz=True):
+    if not end:
         """ get current date """
-        end.append(time.strftime("%Y-%m"))
+        end = time.strftime("%Y-%m")
 
-    maildict = parsedatemail(maillist, start[0], end[0], start[1])
+    maildict = parsedatemail(maillist, start[0], end, start[1])
     maildict2 = {}
     buglist = {}
     patchinfo = {}
@@ -309,8 +309,7 @@ def watchlibvirtrepo(checkall=False):
             Patchinfo.save()
 
 def patchwatcher():
-    start = ['2016-5', '00410']
-    end = []
+    start = ['2016-5', '01170']
     count = 0
     firstinit=True
 
@@ -324,7 +323,7 @@ def patchwatcher():
             start = loaddateinfo()
 
         try:
-            groupinfo, patchset, patchinfo, lastmsginfo = getmailwithdate(LIBVIR_LIST, start, end)
+            groupinfo, patchset, patchinfo, lastmsginfo = getmailwithdate(LIBVIR_LIST, start)
         except Exception, e:
             logging.info("Exception: %s" % e)
             print traceback.format_exc()
