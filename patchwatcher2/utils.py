@@ -337,22 +337,40 @@ def loaddata(filepath):
 
 def downloadsourcecode(gitrepo):
     cmd = "git clone %s" % (gitrepo)
-    output = subprocess.check_output(cmd.split(),stderr=STDOUT)
+    try:
+        output = subprocess.check_output(cmd.split(),stderr=STDOUT)
+    except subprocess.CalledProcessError as detail:
+        logging.warning("fail to get source code % " % gitrepo)
+        os.chdir(olddir)
+        return
     logging.debug("run cmd : %s" % cmd)
     return output
 
 def getgitlog(srcdir, startdate, enddate):
+    olddir = os.curdir
     os.chdir(srcdir)
     cmd = ['git', 'log', '--since="%s"' % startdate, '--before="%s"' % enddate, '--pretty=oneline']
-    output = subprocess.check_output(cmd, stderr=STDOUT)
-    os.chdir("../")
+    try:
+        output = subprocess.check_output(cmd, stderr=STDOUT)
+    except subprocess.CalledProcessError as detail:
+        logging.warning("fail to get git log info")
+        os.chdir(olddir)
+        return
+    os.chdir(olddir)
     return output
 
 def callgitpull(srcdir):
+    olddir = os.curdir
     os.chdir(srcdir)
     cmd = "git pull"
-    output = subprocess.check_output(cmd.split(), stderr=STDOUT)
-    os.chdir("../")
+    try:
+        output = subprocess.check_output(cmd.split(), stderr=STDOUT)
+    except subprocess.CalledProcessError as detail:
+        logging.warning("fail to call git pull")
+        os.chdir(olddir)
+        return
+
+    os.chdir(olddir)
     return output
 
 def testparsehtmlpatch(maillink=None):
