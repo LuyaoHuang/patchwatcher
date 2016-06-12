@@ -341,13 +341,12 @@ def downloadsourcecode(gitrepo):
         output = subprocess.check_output(cmd.split(),stderr=STDOUT)
     except subprocess.CalledProcessError as detail:
         logging.warning("fail to get source code % " % gitrepo)
-        os.chdir(olddir)
         return
     logging.debug("run cmd : %s" % cmd)
     return output
 
 def getgitlog(srcdir, startdate, enddate):
-    olddir = os.curdir
+    olddir = os.getcwd()
     os.chdir(srcdir)
     cmd = ['git', 'log', '--since="%s"' % startdate, '--before="%s"' % enddate, '--pretty=oneline']
     try:
@@ -360,7 +359,7 @@ def getgitlog(srcdir, startdate, enddate):
     return output
 
 def callgitpull(srcdir):
-    olddir = os.curdir
+    olddir = os.getcwd()
     os.chdir(srcdir)
     cmd = "git pull"
     try:
