@@ -215,7 +215,12 @@ def getmailwithdate(maillist, start, end=None, skipbz=True):
                 hreflist = []
                 link = genurlofpatch(maillist, year, month, msgid)
                 strings = getmaildata(link)
-                info = parsehtmlpatch(strings, hreflist, genurlofpatchhead(maillist, year, month))
+                try:
+                    info = parsehtmlpatch(strings, hreflist, genurlofpatchhead(maillist, year, month))
+                except StructError:
+                    logging.error("Cannot parse "+link)
+                    continue
+
                 if skipbz:
                     """ record the patch which already have bz """
                     if "bugzilla.redhat.com" in info[3]:

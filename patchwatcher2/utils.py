@@ -38,6 +38,13 @@ MONTH = {'12':'December',
          '1':'January',
          }
 
+class StructError(Exception):
+    def __init__(self, info):
+        self.info = info
+
+    def __str__(self):
+        return repr(self.info)
+
 def genbuglist(buglist):
     ret = 'https://bugzilla.redhat.com/buglist.cgi?bug_id='
     tmplist = []
@@ -130,9 +137,13 @@ def getmaildata(link, timeout=None):
 
 def parsehtmlpatch(htmlstr, link=None, urlheader=None):
     xml = etree.HTML(htmlstr)
-    lilist = xml.xpath('/html/body/ul/li')
-    pre = xml.xpath('/html/body/pre')[0]
-    ref = xml.xpath('/html/body/ul/li/strong')
+    try:
+        lilist = xml.xpath('/html/body/ul/li')
+        pre = xml.xpath('/html/body/pre')[0]
+        ref = xml.xpath('/html/body/ul/li/strong')
+    except:
+        raise StructError("Fail to parse html")
+
     retpatchset = {"Follow-Ups": {}, "References": {}}
 
     if not lilist:
