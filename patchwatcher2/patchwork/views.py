@@ -7,12 +7,12 @@ from django.template import RequestContext, loader
 from django.forms.models import model_to_dict
 from .models import Dataset
 import cgi
+from patchwork import createpatch, patchsequence
 
 def index(request):
     template = loader.get_template('text.html')
     context = RequestContext(request, {})
-    return HttpResponse(template.render(context))
-#    return render(request, 'text.html')
+    return HttpResponse(template.render(context), content_type="charset=utf-8")
 
 def data(request):
     ret = []
@@ -165,3 +165,29 @@ def updatebuglink(request):
 
     return JsonResponse({'ret': 0})
 
+def creatpatchfile(request, md5code):
+    try:
+        data = Dataset.objects.get(md5lable=md5code)
+    except:
+        return HttpResponse("Error", content_type="text/plain; charset=utf-8")
+
+    if len(data.subpatch.all()) > 1:
+        patch = ""
+        patchlist = []
+        for i in data.subpatch.all():
+            patchlist.append(i.patchlink)
+
+        patchlist = patchsequence(patchlist)
+
+        for i in patchlist:
+            patch += createpatch(i)
+
+    elif data.subpatch.all()[0].patchlink != data.patchlink:
+        try:
+            patch = createpatch(data.patchlink)
+        except:
+            patch = createpatch(data.subpatch.all()[0].patchlink)
+    else:
+        patch = createpatch(data.patchlink)
+
+    return HttpResponse(patch, content_type="text/plain; charset=utf-8")

@@ -9,6 +9,7 @@ import time
 import lxml.etree as etree
 import logging
 import traceback
+import hashlib
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
@@ -37,7 +38,7 @@ def loaddateinfo():
         return
     return [date.date, date.msgid]
 
-def fixbreakpatchset(patchlink, fullcheck=False):
+def fixbreakpatchset(patchlink, newpatchset, fullcheck=False):
     ext = None
     new = None
     try:
@@ -57,25 +58,28 @@ def fixbreakpatchset(patchlink, fullcheck=False):
         except:
             pass
 
+        m = hashlib.md5()
+        m.update(patchlink)
         new = Dataset.objects.create(name=cleansubject(info[0])[1], desc=getdescfrommsg(info[3]),
                     group="others", patchlink=patchlink,
                     author=info[1],date=transtime(info[2]),
-                    testcase='N/A',testby='N/A',state='ToDo',buglink="N/A")
+                    testcase='N/A',testby='N/A',state='ToDo',buglink="N/A", md5lable=m.hexdigest())
         logging.info("create a new obj in db which link is %s" % patchlink)
+        newpatchset.append(patchlink)
 
     if ext:
         new.group = ext.group
         new.save()
 
     for i in info[4]["Follow-Ups"].keys():
-        sitems = fixbreakpatchset(info[4]["Follow-Ups"][i])
+        sitems = fixbreakpatchset(info[4]["Follow-Ups"][i], newpatchset)
         if not sitems:
             continue
 
         new.subpatch.add(sitems)
 
     for i in info[4]["References"].keys():
-        sitems = fixbreakpatchset(info[4]["References"][i])
+        sitems = fixbreakpatchset(info[4]["References"][i], newpatchset)
         if not sitems:
             continue
 
@@ -84,7 +88,7 @@ def fixbreakpatchset(patchlink, fullcheck=False):
     return new
 
 
-def updatepatchinfo(groupinfo, patchset, patchinfo):
+def updatepatchinfo(groupinfo, patchset, patchinfo, newpatchset):
     tmppatchset = {}
     for n in groupinfo.keys():
         if n not in patchinfo.keys():
@@ -115,10 +119,13 @@ def updatepatchinfo(groupinfo, patchset, patchinfo):
         except Exception:
             pass
 
+        m = hashlib.md5()
+        m.update(patchinfo[n]["patchlink"])
         Dataset.objects.create(name=n, desc=patchinfo[n]["desc"],
                     group=group, patchlink=patchinfo[n]["patchlink"],
                     author=patchinfo[n]["author"],date=transtime(patchinfo[n]["date"]),
-                    testcase='N/A',testby='N/A',state='ToDo',buglink=buglink)
+                    testcase='N/A',testby='N/A',state='ToDo',buglink=buglink, md5lable=m.hexdigest())
+        newpatchset.append(patchinfo[n]["patchlink"])
 
     for n in tmppatchset.keys():
         checkpatchset = True
@@ -138,7 +145,7 @@ def updatepatchinfo(groupinfo, patchset, patchinfo):
             if checkpatchset == True and i not in patchset[name]:
                 logging.warning("cannot find %s in patchset for %s" % (i, name))
 
-            sitems = fixbreakpatchset(subpatch["Follow-Ups"][i])
+            sitems = fixbreakpatchset(subpatch["Follow-Ups"][i], newpatchset)
             if not sitems:
                 continue
 
@@ -148,7 +155,7 @@ def updatepatchinfo(groupinfo, patchset, patchinfo):
             if checkpatchset == True and i not in patchset[name]:
                 logging.warning("cannot find %s in patchset for %s" % (i, name))
 
-            sitems = fixbreakpatchset(subpatch["References"][i])
+            sitems = fixbreakpatchset(subpatch["References"][i], newpatchset)
             if not sitems:
                 continue
 
@@ -326,11 +333,13 @@ def watchlibvirtrepo(checkall=False):
             Patchinfo.save()
 
 def patchwatcher():
-    start = ['2016-5', '01170']
+    start = ['2016-6', '01005']
     count = 0
     firstinit=True
 
     while 1:
+        newpatchset = []
+
         count += 1
         if count%6 == 0:
             logging.info("backups db")
@@ -350,7 +359,7 @@ def patchwatcher():
             continue
 
         logging.info("update %d patches" % len(groupinfo))
-        updatepatchinfo(groupinfo, patchset, patchinfo)
+        updatepatchinfo(groupinfo, patchset, patchinfo, newpatchset)
         freshdateinfo(lastmsginfo)
         watchlibvirtrepo(firstinit)
         time.sleep(600)

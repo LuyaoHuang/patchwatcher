@@ -30,4 +30,5 @@ urlpatterns = [
     url(r'^updatetestplan$', views.updatetestplan, name='updatetestplan'),
     url(r'^updatefeature$', views.updatefeature, name='updatefeature'),
     url(r'^updatebuglink$', views.updatebuglink, name='updatebuglink'),
+    url(r'^patchfile/([0-9a-f]{32})$', views.creatpatchfile, name='creatpatchfile'),
 ]

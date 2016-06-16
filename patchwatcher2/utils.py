@@ -11,6 +11,7 @@ import os
 from dateutil import parser
 import time
 import logging
+import urllib2
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
@@ -106,34 +107,9 @@ def genurlofpatch(maillist, year, month, msgid):
 def genurlofpatchhead(maillist, year, month):
     return "%s/%s-%s/" % (maillist, year, MONTH[str(month)])
 
-def getmaildata(link, timeout=None):
-    tmpfile = '/tmp/%s' % link.split('/')[-1]
-    try:
-        os.remove(tmpfile)
-    except:
-        pass
-
-    if timeout is not None:
-        cmd = 'wget %s -O %s --timeout=%s' % (link, tmpfile, timeout)
-    else:
-        cmd = 'wget %s -O %s' % (link, tmpfile)
-
-    logging.debug("run cmd: %s" % cmd)
-    try:
-        output = subprocess.check_output(cmd.split(),stderr=STDOUT)
-    except:
-        if timeout is not None:
-            if timeout > 600:
-                raise ValueError, "cannot get %s" % link
-            return getmaildata(link, timeout=timeout+60)
-        else:
-            return getmaildata(link, 60)
-
-    f = open(tmpfile)
-    ret = f.read()
-    f.close()
-    os.remove(tmpfile)
-    return ret
+def getmaildata(link, times=None):
+    strings = urllib2.urlopen(link).read().decode("utf-8")
+    return strings
 
 def parsehtmlpatch(htmlstr, link=None, urlheader=None):
     xml = etree.HTML(htmlstr)
