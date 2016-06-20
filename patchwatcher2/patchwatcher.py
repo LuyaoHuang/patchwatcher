@@ -10,6 +10,7 @@ import lxml.etree as etree
 import logging
 import traceback
 import hashlib
+import socket
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
@@ -87,6 +88,28 @@ def fixbreakpatchset(patchlink, newpatchset, fullcheck=False):
 
     return new
 
+def sendpatchinfo(newpatchset, server):
+    skiplist = []
+    for i in newpatchset:
+        obj = Dataset.objects.get(patchlink=i)
+        if len(obj.subpatch.all()) > 1:
+            for n in obj.subpatch.all():
+                skiplist.append(n.patchlink)
+        elif len(obj.subpatch.all()) == 1 and obj.subpatch.all()[0].patchlink != obj.patchlink:
+            """ so not sure for right now """
+            skiplist.append(i)
+
+    for i in newpatchset:
+        if i in skiplist:
+            continue
+
+        hostip = socket.gethostbyname(socket.gethostname())
+        tmpdict = {"patchurl" : "http://%s:8888/patchfile/%s" % (hostip, Dataset.objects.get(patchlink=i).md5lable)}
+        try:
+            pikasendmsg(server, str(tmpdict), "patchwatcher")
+        except pika.exceptions.AMQPConnectionError:
+            logging.warning("cannot connect to "+server)
+            return
 
 def updatepatchinfo(groupinfo, patchset, patchinfo, newpatchset):
     tmppatchset = {}
@@ -336,6 +359,9 @@ def patchwatcher():
     start = ['2016-6', '01005']
     count = 0
     firstinit=True
+    config = loadconfig()
+    if "mqserver" not in config.keys():
+        raise Exception("no mqserver in config file")
 
     while 1:
         newpatchset = []
@@ -361,6 +387,7 @@ def patchwatcher():
         logging.info("update %d patches" % len(groupinfo))
         updatepatchinfo(groupinfo, patchset, patchinfo, newpatchset)
         freshdateinfo(lastmsginfo)
+        sendpatchinfo(newpatchset, config["mqserver"])
         watchlibvirtrepo(firstinit)
         time.sleep(600)
         firstinit=False

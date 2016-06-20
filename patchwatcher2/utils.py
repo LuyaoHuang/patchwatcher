@@ -10,14 +10,16 @@ import cPickle as pickle
 import os
 from dateutil import parser
 import time
+import yaml
 import logging
 import urllib2
+import pika
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S',
                     filename='patchwatcher.log')
-
+logging.getLogger("pika").propagate = False
 
 group1 = ['src/storage/','src/qemu/qemu_blockjob.c']
 group2 = ['src/network/','src/cpu/','src/interface/', 'src/node_device/','src/nwfilter/','src/util/virnuma.c',]
@@ -370,4 +372,15 @@ def testparsehtmlpatch(maillink=None):
     print ""
     print link
 
+def loadconfig(configfile="config.yaml"):
+    with open(configfile, 'r') as stream:
+        return yaml.load(stream)
 
+def pikasendmsg(server, msg, exchangename):
+    """ TODO: use celery """
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=server))
+    channel = connection.channel()
+    channel.exchange_declare(exchange=exchangename, type='fanout')
+    channel.basic_publish(exchange=exchangename, routing_key='', body=msg)
+    logging.debug("Send message: %s" % msg)
+    connection.close()
