@@ -8,6 +8,7 @@ from django.forms.models import model_to_dict
 from .models import Dataset
 import cgi
 from patchwork import createpatch, patchsequence
+from django.db.models import Q
 
 def index(request):
     template = loader.get_template('text.html')
@@ -173,16 +174,10 @@ def creatpatchfile(request, md5code):
 
     if len(data.subpatch.all()) > 1:
         patch = ""
-        patchlist = []
-        for i in data.subpatch.all():
-            patchlist.append(i.patchlink)
+        for i in data.subpatch.all().order_by("patchlink"):
+            patch += createpatch(i.patchlink)
 
-        patchlist = patchsequence(patchlist)
-
-        for i in patchlist:
-            patch += createpatch(i)
-
-    elif data.subpatch.all()[0].patchlink != data.patchlink:
+    elif len(data.subpatch.all()) == 1 and data.subpatch.all()[0].patchlink != data.patchlink:
         try:
             patch = createpatch(data.patchlink)
         except:
@@ -191,3 +186,11 @@ def creatpatchfile(request, md5code):
         patch = createpatch(data.patchlink)
 
     return HttpResponse(patch, content_type="text/plain; charset=utf-8")
+
+def showallmd5lable(request):
+    retdict = {}
+    objs = Dataset.objects.filter(~Q(md5lable=""))
+    for i in objs:
+        retdict[i.patchlink] = i.md5lable
+
+    return JsonResponse(retdict)

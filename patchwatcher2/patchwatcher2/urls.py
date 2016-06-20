@@ -31,4 +31,5 @@ urlpatterns = [
     url(r'^updatefeature$', views.updatefeature, name='updatefeature'),
     url(r'^updatebuglink$', views.updatebuglink, name='updatebuglink'),
     url(r'^patchfile/([0-9a-f]{32})$', views.creatpatchfile, name='creatpatchfile'),
+    url(r'^showallmd5lable$', views.showallmd5lable, name='showallmd5lable'),
 ]
