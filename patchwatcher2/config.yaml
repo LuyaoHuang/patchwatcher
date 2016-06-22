@@ -1,3 +1,4 @@
 #configure of patchwatcher
 
 mqserver: localhost
+serverip: 0.0.0.0

@@ -88,7 +88,7 @@ def fixbreakpatchset(patchlink, newpatchset, fullcheck=False):
 
     return new
 
-def sendpatchinfo(newpatchset, server):
+def sendpatchinfo(newpatchset, server, serverip=None):
     skiplist = []
     for i in newpatchset:
         obj = Dataset.objects.get(patchlink=i)
@@ -103,7 +103,11 @@ def sendpatchinfo(newpatchset, server):
         if i in skiplist:
             continue
 
-        hostip = socket.gethostbyname(socket.gethostname())
+        if not serverip:
+            hostip = socket.gethostbyname(socket.gethostname())
+        else:
+            hostip = serverip
+
         tmpdict = {"patchurl" : "http://%s:8888/patchfile/%s" % (hostip, Dataset.objects.get(patchlink=i).md5lable)}
         try:
             pikasendmsg(server, str(tmpdict), "patchwatcher")
@@ -360,8 +364,9 @@ def patchwatcher():
     count = 0
     firstinit=True
     config = loadconfig()
-    if "mqserver" not in config.keys():
-        raise Exception("no mqserver in config file")
+    for i in ["mqserver", "serverip"]:
+        if i not in config.keys():
+            raise Exception("no %s in config file" % i)
 
     while 1:
         newpatchset = []
@@ -387,7 +392,7 @@ def patchwatcher():
         logging.info("update %d patches" % len(groupinfo))
         updatepatchinfo(groupinfo, patchset, patchinfo, newpatchset)
         freshdateinfo(lastmsginfo)
-        sendpatchinfo(newpatchset, config["mqserver"])
+        sendpatchinfo(newpatchset, config["mqserver"], config["serverip"])
         watchlibvirtrepo(firstinit)
         time.sleep(600)
         firstinit=False
