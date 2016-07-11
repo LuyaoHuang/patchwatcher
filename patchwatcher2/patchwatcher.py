@@ -116,10 +116,10 @@ def sendpatchinfo(newpatchset, configure):
             return
 
         try:
-            pikasendmsg(configure['server'], str(tmpdict), "patchwatcher")
+            pikasendmsg(configure['mqserver'], str(tmpdict), "patchwatcher")
         except pika.exceptions.AMQPConnectionError:
-            logging.warning("cannot connect to "+configure['server'])
-            return
+            logging.warning("Cannot connect to "+configure['mqserver'])
+            logging.warning("Skip send message")
 
 def updatepatchinfo(groupinfo, patchset, patchinfo, newpatchset):
     tmppatchset = {}

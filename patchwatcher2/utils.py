@@ -393,11 +393,12 @@ def jenkinsJobTrigger(parameter, configure):
     tmplist = []
     for i in configure["jenkins_job_parameter"]:
         if i.values()[0] in parameter.keys():
-            tmplist.append({"name": i.keys()[0], "value": parameter(i.values()[0])})
+            tmplist.append({"name": i.keys()[0], "value": parameter[i.values()[0]]})
         else:
             tmplist.append({"name": i.keys()[0], "value": i.values()[0]})
     jsondata = {"parameter": tmplist}
 
+    logging.debug("Create a job on %s with parameter %s" % (configure['jenkins_job_url'], str(jsondata)))
     if not configure['verify']:
         return requests.post(configure['jenkins_job_url'], data=data, json=jsondata, verify=False)
     else:
