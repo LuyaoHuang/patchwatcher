@@ -88,7 +88,7 @@ def fixbreakpatchset(patchlink, newpatchset, fullcheck=False):
 
     return new
 
-def sendpatchinfo(newpatchset, server, serverip=None):
+def sendpatchinfo(newpatchset, configure):
     skiplist = []
     for i in newpatchset:
         obj = Dataset.objects.get(patchlink=i)
@@ -103,16 +103,22 @@ def sendpatchinfo(newpatchset, server, serverip=None):
         if i in skiplist:
             continue
 
-        if not serverip:
+        if not configure["serverip"]:
             hostip = socket.gethostbyname(socket.gethostname())
         else:
-            hostip = serverip
+            hostip = configure["serverip"]
 
         tmpdict = {"patchurl" : "http://%s:8888/patchfile/%s" % (hostip, Dataset.objects.get(patchlink=i).md5lable)}
         try:
-            pikasendmsg(server, str(tmpdict), "patchwatcher")
+            jenkinsJobTrigger({"_patchurl_": tmpdict["patchurl"]}, configure)
+        except:
+            logging.error("Fail to trigger a jenkins job")
+            return
+
+        try:
+            pikasendmsg(configure['server'], str(tmpdict), "patchwatcher")
         except pika.exceptions.AMQPConnectionError:
-            logging.warning("cannot connect to "+server)
+            logging.warning("cannot connect to "+configure['server'])
             return
 
 def updatepatchinfo(groupinfo, patchset, patchinfo, newpatchset):
@@ -364,7 +370,7 @@ def patchwatcher():
     count = 0
     firstinit=True
     config = loadconfig()
-    for i in ["mqserver", "serverip"]:
+    for i in ["mqserver", "serverip", "jenkins_job_url", "jenkins_job_token", "jenkins_job_parameter", "verify"]:
         if i not in config.keys():
             raise Exception("no %s in config file" % i)
 
@@ -392,7 +398,7 @@ def patchwatcher():
         logging.info("update %d patches" % len(groupinfo))
         updatepatchinfo(groupinfo, patchset, patchinfo, newpatchset)
         freshdateinfo(lastmsginfo)
-        sendpatchinfo(newpatchset, config["mqserver"], config["serverip"])
+        sendpatchinfo(newpatchset, config)
         watchlibvirtrepo(firstinit)
         time.sleep(600)
         firstinit=False

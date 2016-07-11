@@ -2,3 +2,14 @@
 
 mqserver: localhost
 serverip: 0.0.0.0
+
+
+# jenkins Remote Access configure
+# Used to trigger a job via remote access
+
+jenkins_job_url:
+jenkins_job_token:
+jenkins_job_parameter:
+    - parameter_name:
+        _patchurl_
+verify:
