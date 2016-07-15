@@ -20,6 +20,7 @@ class Dataset(models.Model):
     buglink = models.CharField(max_length=100, default="N/A" ,blank=True, null=True)
 
     md5lable = models.CharField(max_length=10, default="" ,blank=True, null=True)
+    patchlabel = models.CharField(max_length=100, default="" ,blank=True, null=True)
 
     subpatch = models.ManyToManyField("self")
 

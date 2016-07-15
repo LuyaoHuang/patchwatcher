@@ -53,7 +53,7 @@ def genbuglist(buglist):
     ret = 'https://bugzilla.redhat.com/buglist.cgi?bug_id='
     tmplist = []
     for n in buglist:
-        if not re.match('^https://bugzilla.redhat.com/',n):
+        if not re.match('^https://bugzilla.redhat.com/', n):
             continue
 
         if n.split('=')[-1] not in tmplist:
@@ -75,20 +75,22 @@ def bakdb():
     output = subprocess.check_output(cmd.split(),stderr=STDOUT)
     logging.debug("run cmd: %s" % cmd)
 
-def cleansubject(subject):
-    if "PATCH" not in subject:
-        cleansubj = subject.split(']')[-1][1:]
-        return ['', cleansubj]
-
-    tmpstr = subject[subject.find("PATCH"):]
-    cleansubj = tmpstr[tmpstr.find(']') + 2:]
+def parseSubject(subject):
     info = ''
-    for n in tmpstr[:tmpstr.find(']')].split():
-        if "/" in n:
-            info = n
-            break
+    labels = []
 
-    return [info, cleansubj]
+    cleansubj = subject.split(']')[-1][1:]
+    if "PATCH" not in subject:
+        return [info, cleansubj, labels]
+
+    for i in re.findall('\[[^\[\]]+\]', subject):
+        tmplist = i[1:-1].replace('PATCH', ' ').split()
+        for n in tmplist:
+            if '/' in n:
+                info = n
+            labels.append(n)
+
+    return [info, cleansubj, labels]
 
 def getdescfrommsg(msg):
     desc = ''
@@ -170,7 +172,7 @@ def parsehtmlpatch(htmlstr, link=None, urlheader=None):
                 for m in n.getparent().xpath('./ul/li/strong/a'):
                     if "Re:" in m.text:
                         continue
-                    tmpsubject = cleansubject(m.text)
+                    tmpsubject = parseSubject(m.text)
                     if tmpsubject[0] != '':
                         if patchsetn == 0:
                             patchsetn = int(tmpsubject[0].split('/')[1])
@@ -191,8 +193,8 @@ def parsehtmlpatch(htmlstr, link=None, urlheader=None):
                 for m in n.getparent().xpath('./ul/li/strong/a'):
                     if "Re:" in m.text:
                         continue
-                    tmpsubject = cleansubject(m.text)
-                    tmpsubject2 = cleansubject(subject)
+                    tmpsubject = parseSubject(m.text)
+                    tmpsubject2 = parseSubject(subject)
                     if tmpsubject2[0] == '':
                         logging.warning("cannot get %s patch index" % subject)
                     elif int(tmpsubject2[0].split('/')[1]) == 0:

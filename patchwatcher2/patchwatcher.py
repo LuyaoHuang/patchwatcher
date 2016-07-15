@@ -52,19 +52,20 @@ def fixbreakpatchset(patchlink, newpatchset, fullcheck=False):
     strings = getmaildata(patchlink)
     header = patchlink[:patchlink.find("msg")]
     info = parsehtmlpatch(strings, urlheader=header)
+    _, cleansubject, labels = parseSubject(info[0])
 
     if not new:
         try:
-            ext = Dataset.objects.get(name=cleansubject(info[0])[1])
+            ext = Dataset.objects.get(name=cleansubject)
         except:
             pass
 
         m = hashlib.md5()
         m.update(patchlink)
-        new = Dataset.objects.create(name=cleansubject(info[0])[1], desc=getdescfrommsg(info[3]),
+        new = Dataset.objects.create(name=cleansubject, desc=getdescfrommsg(info[3]),
                     group="others", patchlink=patchlink,
                     author=info[1],date=transtime(info[2]),
-                    testcase='N/A',testby='N/A',state='ToDo',buglink="N/A", md5lable=m.hexdigest())
+                    testcase='N/A',testby='N/A',state='ToDo',buglink="N/A", md5lable=m.hexdigest(), patchlabel=' '.join(labels))
         logging.info("create a new obj in db which link is %s" % patchlink)
         newpatchset.append(patchlink)
 
@@ -157,7 +158,7 @@ def updatepatchinfo(groupinfo, patchset, patchinfo, newpatchset):
         Dataset.objects.create(name=n, desc=patchinfo[n]["desc"],
                     group=group, patchlink=patchinfo[n]["patchlink"],
                     author=patchinfo[n]["author"],date=transtime(patchinfo[n]["date"]),
-                    testcase='N/A',testby='N/A',state='ToDo',buglink=buglink, md5lable=m.hexdigest())
+                    testcase='N/A',testby='N/A',state='ToDo',buglink=buglink, md5lable=m.hexdigest(), patchlabel=' '.join(patchinfo[n]["labels"]))
         newpatchset.append(patchinfo[n]["patchlink"])
 
     for n in tmppatchset.keys():
@@ -261,18 +262,20 @@ def getmailwithdate(maillist, start, end=None, skipbz=True):
                     logging.error("Cannot parse "+link)
                     continue
 
+                _, cleansubject, labels = parseSubject(info[0])
                 if skipbz:
                     """ record the patch which already have bz """
                     if "bugzilla.redhat.com" in info[3]:
-                        logging.info("find a patch named %s it has bugzilla" % cleansubject(info[0])[1])
-                        buglist[cleansubject(info[0])[1]] = hreflist
+                        logging.info("find a patch named %s it has bugzilla" % cleansubject)
+                        buglist[cleansubject] = hreflist
 
-                maildict2[cleansubject(info[0])[1]] = info[3]
-                patchinfo[cleansubject(info[0])[1]] = { "patchlink" :link,
-                                                        "desc" :getdescfrommsg(info[3]),
-                                                        "author":info[1],
-                                                        "date":info[2],
-                                                        "patchset":info[4]}
+                maildict2[cleansubject] = info[3]
+                patchinfo[cleansubject] = { "patchlink": link,
+                                            "desc": getdescfrommsg(info[3]),
+                                            "author": info[1],
+                                            "date": info[2],
+                                            "patchset": info[4],
+                                            "labels": labels}
                 lastmsginfo = ['%s-%s' % (year, month), str(msgid)]
 
     if lastmsginfo == start:
