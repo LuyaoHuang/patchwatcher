@@ -109,6 +109,16 @@ def sendpatchinfo(newpatchset, configure):
         else:
             hostip = configure["serverip"]
 
+        labellist = []
+        if configure['label_blacklist']:
+            for label in configure['label_blacklist']:
+                if label in str(Dataset.objects.get(patchlink=i).patchlabel):
+                    labellist.append(label)
+
+        if labellist:
+            logging.debug("Skip %s since it has label %s" % (i, ','.join(labellist)))
+            continue
+
         tmpdict = {"patchurl" : "http://%s:8888/patchfile/%s" % (hostip, Dataset.objects.get(patchlink=i).md5lable)}
         try:
             jenkinsJobTrigger({"_patchurl_": tmpdict["patchurl"]}, configure)
@@ -373,7 +383,7 @@ def patchwatcher():
     count = 0
     firstinit=True
     config = loadconfig()
-    for i in ["mqserver", "serverip", "jenkins_job_url", "jenkins_job_token", "jenkins_job_parameter", "verify"]:
+    for i in ["mqserver", "serverip", "jenkins_job_url", "jenkins_job_token", "jenkins_job_parameter", "verify", "label_blacklist"]:
         if i not in config.keys():
             raise Exception("no %s in config file" % i)
 

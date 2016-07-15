@@ -13,3 +13,17 @@ jenkins_job_parameter:
     - parameter_name:
         _patchurl_
 verify:
+
+
+# patch label blacklist of trigger patch
+
+label_blacklist:
+    - sandbox
+    - libvirt-glib
+    - gconfig
+    - libvirt-python
+    - libvirt-test-api
+    - qemu
+    - Qemu-devel
+    - libvirt-php
+    - libvirt-tck
