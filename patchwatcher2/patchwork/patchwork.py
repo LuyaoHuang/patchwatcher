@@ -52,6 +52,13 @@ def createpatch(htmllink):
 
     tmpstr = improvemailaddr(author)
 
+    if '\r\n\t' in subject:
+        subject = subject.replace('\r\n\t', ' ')
+    if '\r\n' in subject:
+        subject = subject.replace('\r\n', '')
+    if '\t' in subject:
+        subject = subject.replace('\t', ' ')
+
     returnstr += 'From: %s\n' % tmpstr
     returnstr += 'Date: %s\n' % date
     returnstr += 'Subject: %s\n\n' % subject
