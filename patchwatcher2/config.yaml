@@ -1,16 +1,16 @@
 #configure of patchwatcher
 
 mqserver: localhost
-serverip: 0.0.0.0
+serverip: 10.66.6.19
 
 
 # jenkins Remote Access configure
 # Used to trigger a job via remote access
 
 jenkins_job_url:
-jenkins_job_token:
+jenkins_job_token: 'd6a942ce258932d65ea55e72fc82ae93'
 jenkins_job_parameter:
-    - parameter_name:
+    - CI_PATCH_URL:
         _patchurl_
 verify:
 
@@ -27,3 +27,4 @@ label_blacklist:
     - Qemu-devel
     - libvirt-php
     - libvirt-tck
+    - python
