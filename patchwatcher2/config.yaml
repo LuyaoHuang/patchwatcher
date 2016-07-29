@@ -21,6 +21,7 @@ label_blacklist:
     - sandbox
     - libvirt-glib
     - gconfig
+    - glib
     - libvirt-python
     - libvirt-test-api
     - qemu
