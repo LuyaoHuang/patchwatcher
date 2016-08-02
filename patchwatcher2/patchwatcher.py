@@ -93,7 +93,7 @@ def fixbreakpatchset(patchlink, newpatchset, fullcheck=False):
 def validPatchSet(patchlink):
     obj = Dataset.objects.get(patchlink=patchlink)
     """ 1st check the same name commit """
-    tmplist = CommitData.objects.filter(name = obj.name)
+    tmplist = CommitData.objects.filter(subject = obj.name)
     """ TODO: check desc """
     if tmplist:
         return False
