@@ -130,4 +130,5 @@ class CommitWatcher(object):
 
         ret_infos['desc'] = desc
         ret_infos['diff'] = diff
+        ret_infos['commit'] = commit_id
         return ret_infos

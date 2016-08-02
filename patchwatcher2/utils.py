@@ -388,18 +388,18 @@ def pikasendmsg(server, msg, exchangename):
     logging.debug("Send message: %s" % msg)
     connection.close()
 
-def jenkinsJobTrigger(parameter, configure):
-    if not configure['jenkins_job_url']:
+def jenkinsJobTrigger(parameter, job_info):
+    if not job_info['url']:
         return
-    data = {"token": configure['jenkins_job_token']}
-    for i in configure["jenkins_job_parameter"]:
-        if i.values()[0] in parameter.keys():
-            data[i.keys()[0]] = parameter[i.values()[0]]
+    data = {"token": job_info['token']}
+    for key, item in job_info["parameter"].items():
+        if item in parameter.keys():
+            data[key] = parameter[item]
         else:
-            data[i.keys()[0]] = i.values()[0]
+            data[key] = item
 
-    logging.debug("Create a job on %s with parameter %s" % (configure['jenkins_job_url'], str(data)))
-    if not configure['verify']:
-        return requests.post(configure['jenkins_job_url'], data=data, verify=False)
+    logging.debug("Create a job on %s with parameter %s" % (job_info['url'], str(data)))
+    if not job_info['verify']:
+        return requests.post(job_info['url'], data=data, verify=False)
     else:
-        return requests.post(configure['jenkins_job_url'], data=data, verify=configure['verify'])
+        return requests.post(job_info['url'], data=data, verify=job_info['verify'])

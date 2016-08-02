@@ -7,13 +7,23 @@ serverip: 10.66.6.19
 # jenkins Remote Access configure
 # Used to trigger a job via remote access
 
-jenkins_job_url:
-jenkins_job_token: 'd6a942ce258932d65ea55e72fc82ae93'
-jenkins_job_parameter:
-    - CI_PATCH_URL:
-        _patchurl_
-verify:
-
+jenkins_job_trigger:
+    acceptance_job:
+        url:
+        token:
+        parameter:
+            CI_PATCH_URL:
+                _patchurl_
+        verify:
+    unit_test_job:
+        url:
+        token:
+        parameter:
+            CI_PATCH_URL:
+                _patchurl_
+            CI_GIT_COMMIT:
+                _git_commit_
+        verify:
 
 # patch label blacklist of trigger patch
 

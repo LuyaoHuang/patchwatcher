@@ -24,6 +24,14 @@ class Dataset(models.Model):
 
     subpatch = models.ManyToManyField("self")
 
+class CommitData(models.Model):
+    commit = models.CharField(max_length=100)
+    subject = models.CharField(max_length=100)
+    desc = models.CharField(max_length=65536)
+    author = models.CharField(max_length=100)
+    date = models.DateTimeField()
+    unit_test = models.CharField(max_length=100, default="ToDo" ,blank=True, null=True)
+
 class currentwork(models.Model):
     date = models.CharField(max_length=10)
     msgid = models.CharField(max_length=10)

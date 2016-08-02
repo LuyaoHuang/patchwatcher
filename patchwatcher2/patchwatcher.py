@@ -19,7 +19,8 @@ logging.basicConfig(level=logging.DEBUG,
 
 from splitpatch import splitpatchinternal
 from utils import *
-from patchwork.models import Dataset,currentwork,Patchinfos
+from patchwork.models import Dataset,currentwork,Patchinfos,CommitData
+from commitwatcher import CommitWatcher
 
 LIBVIR_LIST = "https://www.redhat.com/archives/libvir-list"
 LIBVIRT_REPO = "git://libvirt.org/libvirt.git"
@@ -89,6 +90,16 @@ def fixbreakpatchset(patchlink, newpatchset, fullcheck=False):
 
     return new
 
+def validPatchSet(patchlink):
+    obj = Dataset.objects.get(patchlink=patchlink)
+    """ 1st check the same name commit """
+    tmplist = CommitData.objects.filter(name = obj.name)
+    """ TODO: check desc """
+    if tmplist:
+        return False
+    else:
+        return True
+
 def sendpatchinfo(newpatchset, configure):
     skiplist = []
     for i in newpatchset:
@@ -119,12 +130,20 @@ def sendpatchinfo(newpatchset, configure):
             logging.debug("Skip %s since it has label %s" % (i, ','.join(labellist)))
             continue
 
-        tmpdict = {"patchurl" : "http://%s:8888/patchfile/%s" % (hostip, Dataset.objects.get(patchlink=i).md5lable)}
-        try:
-            jenkinsJobTrigger({"_patchurl_": tmpdict["patchurl"]}, configure)
-        except:
-            logging.error("Fail to trigger a jenkins job")
-            return
+        if validPatchSet(i):
+            if len(CommitData.objects.all()) > 0:
+                commit = CommitData.objects.all()[len(CommitData.objects.all()) - 1].commit
+            else:
+                commit = ''
+
+            tmpdict = {"_patchurl_" : "http://%s:8888/patchfile/%s" % (hostip, Dataset.objects.get(patchlink=i).md5lable),
+                    "_git_commit_": commit}
+            try:
+                for job in configure['jenkins_job_trigger'].values():
+                    jenkinsJobTrigger(tmpdict, job)
+            except:
+                logging.error("Fail to trigger a jenkins job")
+                return
 
         try:
             pikasendmsg(configure['mqserver'], str(tmpdict), "patchwatcher")
@@ -380,15 +399,81 @@ def watchlibvirtrepo(checkall=False):
             Patchinfo.enddate = enddate
             Patchinfo.save()
 
+def updateCommitData(infos, params):
+    CommitData.objects.create(commit=infos['commit'],
+            subject=infos['subject'],
+            author=infos['author'],
+            date=transtime(infos['date']),
+            desc=infos['desc'])
+
+    tmplist = Dataset.objects.filter(name = infos['subject'])
+    for tmp in tmplist:
+        tmp.pushed = "Yes"
+        tmp.save()
+        logging.debug("update %s pushed status to yes" % tmp.name)
+
+def triggerCommitJobs(infos, params):
+    job_info = params['job_info']
+    tmpdict = {"_patchurl_" : '',
+               "_git_commit_": infos['commit']}
+    try:
+        jenkinsJobTrigger(tmpdict, job_info)
+    except:
+        logging.error("Fail to trigger a jenkins job")
+
+def watchLibvirtRepo(config, start_date=None, cb_list=None):
+    """
+    cb_list contain several dict which have:
+    init bool if need call it during init repo
+    func func function will be used
+    params dict extra params
+    """
+    if not os.access("./libvirt", os.O_RDONLY):
+        logging.info("Cannot find libvirt source code")
+        logging.info("Download libvirt source code")
+        commit_watcher = CommitWatcher('libvirt', repo_url=LIBVIRT_REPO)
+
+    else:
+        commit_watcher = CommitWatcher('libvirt', repo_path='./libvirt')
+
+    if len(CommitData.objects.all()) == 0 and start_date:
+        end_date = currenttime()
+        tmpdict = commit_watcher.get_commit_by_date(start_date, end_date)
+        for commit_id in tmpdict.keys():
+            infos = commit_watcher.get_commit_infos(commit_id)
+            for cb_dict in cb_list:
+                if cb_dict['init']:
+                    cb_dict['func'](infos, cb_dict['params'])
+
+    commit_list = commit_watcher.pull()
+    if not commit_list:
+        return
+    logging.info("Get %d commit after pull" % len(commit_list))
+
+    for commit_id in commit_list:
+        infos = commit_watcher.get_commit_infos(commit_id)
+        for cb_dict in cb_list:
+            cb_dict['func'](infos, cb_dict['params'])
+
 def patchwatcher():
     start = ['2016-6', '01005']
     count = 0
-    firstinit=True
     config = loadconfig()
-    for i in ["mqserver", "serverip", "jenkins_job_url", "jenkins_job_token", "jenkins_job_parameter", "verify", "label_blacklist"]:
+    if Dataset.objects.all():
+        startdate = Dataset.objects.order_by("date")[0].date.replace(tzinfo=None)
+    else:
+        startdate = None
+    for i in ["mqserver", "serverip", "jenkins_job_trigger", "label_blacklist"]:
         if i not in config.keys():
             raise Exception("no %s in config file" % i)
+    cb_list = []
+    cb_list.append({'init': False ,
+                    'func': triggerCommitJobs,
+                    'params': {'job_info':config['jenkins_job_trigger']['unit_test_job']}})
 
+    cb_list.append({'init': True ,
+                    'func': updateCommitData,
+                    'params': {}})
     while 1:
         newpatchset = []
 
@@ -405,18 +490,16 @@ def patchwatcher():
         except Exception, e:
             logging.info("Exception: %s" % e)
             print traceback.format_exc()
-            watchlibvirtrepo(firstinit)
+            watchLibvirtRepo(config, startdate, cb_list)
             time.sleep(600)
-            firstinit=False
             continue
 
         logging.info("update %d patches" % len(groupinfo))
         updatepatchinfo(groupinfo, patchset, patchinfo, newpatchset)
         freshdateinfo(lastmsginfo)
+        watchLibvirtRepo(config, startdate, cb_list)
         sendpatchinfo(newpatchset, config)
-        watchlibvirtrepo(firstinit)
         time.sleep(600)
-        firstinit=False
 
 if __name__ == '__main__':
     patchwatcher()
