@@ -253,9 +253,11 @@ def parsedatemail(maillist, startdate, enddate, startmsgid):
 def getmailwithdate(maillist, start, end=None, skipbz=True):
     if not end:
         """ get current date """
-        end = time.strftime("%Y-%m")
+        new_end = time.strftime("%Y-%m")
+    else:
+        new_end = end
 
-    maildict = parsedatemail(maillist, start[0], end, start[1])
+    maildict = parsedatemail(maillist, start[0], new_end, start[1])
     maildict2 = {}
     buglist = {}
     patchinfo = {}
