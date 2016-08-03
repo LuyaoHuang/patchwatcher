@@ -96,6 +96,7 @@ def validPatchSet(patchlink):
     tmplist = CommitData.objects.filter(subject = obj.name)
     """ TODO: check desc """
     if tmplist:
+        logging.debug("Skip %s since it have the same name with commit %s" % (obj.name, tmplist[0].commit))
         return False
     else:
         return True
@@ -145,6 +146,8 @@ def sendpatchinfo(newpatchset, configure):
                 logging.error("Fail to trigger a jenkins job")
                 return
 
+        tmpdict = {"patchurl" : "http://%s:8888/patchfile/%s" % (hostip, Dataset.objects.get(patchlink=i).md5lable),
+                   "git_commit": commit}
         try:
             pikasendmsg(configure['mqserver'], str(tmpdict), "patchwatcher")
         except pika.exceptions.AMQPConnectionError:
