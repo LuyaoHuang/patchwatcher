@@ -146,8 +146,7 @@ def sendpatchinfo(newpatchset, configure):
                 logging.error("Fail to trigger a jenkins job")
                 return
 
-        tmpdict = {"patchurl" : "http://%s:8888/patchfile/%s" % (hostip, Dataset.objects.get(patchlink=i).md5lable),
-                   "git_commit": commit}
+        tmpdict = {"patchurl" : "http://%s:8888/patchfile/%s" % (hostip, Dataset.objects.get(patchlink=i).md5lable)}
         try:
             pikasendmsg(configure['mqserver'], str(tmpdict), "patchwatcher")
         except pika.exceptions.AMQPConnectionError:
