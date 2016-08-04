@@ -59,6 +59,10 @@ def genbuglist(buglist):
         if n.split('=')[-1] not in tmplist:
             tmplist.append(n.split('=')[-1])
 
+    if not tmplist:
+        logging.info("Find a strange bug list %s" % str(buglist))
+        return
+
     for n in tmplist[:-1]:
         ret += '%s,' % n
     ret += tmplist[-1]

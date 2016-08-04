@@ -171,6 +171,10 @@ def updatepatchinfo(groupinfo, patchset, patchinfo, newpatchset):
             elif len(patchinfo[n]["buglist"]) == 1:
                 buglink = patchinfo[n]["buglist"][0]
 
+        if not buglink:
+            logging.error("Cannot parse buglink for %s" % patchinfo[n]["patchlink"])
+            buglink = "N/A"
+
         if patchinfo[n]["patchset"]["Follow-Ups"] != {} \
                 or patchinfo[n]["patchset"]["References"] != {}:
             tmppatchset[patchinfo[n]["patchlink"]] = [n, patchinfo[n]["patchset"]]
