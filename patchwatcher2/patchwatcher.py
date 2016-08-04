@@ -92,14 +92,24 @@ def fixbreakpatchset(patchlink, newpatchset, fullcheck=False):
 
 def validPatchSet(patchlink):
     obj = Dataset.objects.get(patchlink=patchlink)
+    latest_commits = len(CommitData.objects.all()) - 100
     """ 1st check the same name commit """
-    tmplist = CommitData.objects.filter(subject = obj.name)
     """ TODO: check desc """
-    if tmplist:
-        logging.debug("Skip %s since it have the same name with commit %s" % (obj.name, tmplist[0].commit))
-        return False
+    if len(obj.subpatch.all()) > 1:
+        for n in obj.subpatch.all():
+            tmplist = CommitData.objects.filter(subject = n.name)
+            for i in tmplist:
+                if i.id > latest_commits:
+                    logging.debug("Skip %s since it have the same name with commit %s" % (n.name, i.commit))
+                    return False
     else:
-        return True
+        tmplist = CommitData.objects.filter(subject = obj.name)
+        for i in tmplist:
+            if i.id > latest_commits:
+                logging.debug("Skip %s since it have the same name with commit %s" % (obj.name, i.commit))
+                return False
+
+    return True
 
 def sendpatchinfo(newpatchset, configure):
     skiplist = []
