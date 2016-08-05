@@ -1,22 +1,10 @@
 import os
+import re
 import lxml.etree as etree
 import subprocess
 import urllib2
 
 """ TODO: move patchwatcher in this dir """
-def patchsequence(patchlinklist):
-    patchbase = patchlinklist[0][:patchlinklist[0].find("msg")]
-    tmpdict = {}
-    for i in patchlinklist:
-        if patchbase not in i:
-            raise Exception("One of these patch link is not right")
-
-        tmpdict[i[i.find("msg")+3:-5]] = i
-
-    tmplist = tmpdict.keys()
-    tmplist.sort()
-    return [tmpdict[i] for i in tmplist]
-
 def improvemailaddr(strings):
     if '<' in strings and '>' in strings:
         tmplist = strings[strings.find('<')+1:strings.find('>')].split()
@@ -77,7 +65,45 @@ def createpatch(htmllink):
     if "diff --git" not in returnstr:
         raise Exception("this is not a patch!")
 
-    return returnstr
+    return returnstr, subject
+
+def create_patch_set(html_link_list):
+    def _parseSubject(subject):
+        """ TODO: move utils in a right place and use it here """
+        info = ''
+        labels = []
+
+        cleansubj = subject.split(']')[-1][1:]
+        if "PATCH" not in subject:
+            return [info, cleansubj, labels]
+
+        for i in re.findall('\[[^\[\]]+\]', subject):
+            tmplist = i[1:-1].replace('PATCH', ' ').split()
+            for n in tmplist:
+                if '/' in n:
+                    info = n
+                labels.append(n)
+
+        return [info, cleansubj, labels]
+
+    ret_patch = ''
+    patch_dict = {}
+    for html_link in html_link_list:
+        tmppatch, tmpsubject = createpatch(html_link)
+        index, _, _ = _parseSubject(tmpsubject)
+        if index == '':
+            """ not sure what happened """
+            ret_patch += tmppatch
+            continue
+
+        patch_dict[str(index)] = tmppatch
+
+    queue = patch_dict.keys()
+    queue.sort()
+    for i in queue:
+        ret_patch += patch_dict[i]
+
+    return ret_patch
 
 if __name__ == '__main__':
 

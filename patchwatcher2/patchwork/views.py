@@ -7,7 +7,7 @@ from django.template import RequestContext, loader
 from django.forms.models import model_to_dict
 from .models import Dataset
 import cgi
-from patchwork import createpatch, patchsequence
+from patchwork import createpatch, create_patch_set
 from django.db.models import Q
 
 def index(request):
@@ -173,17 +173,15 @@ def creatpatchfile(request, md5code):
         return HttpResponse("Error", content_type="text/plain; charset=utf-8")
 
     if len(data.subpatch.all()) > 1:
-        patch = ""
-        for i in data.subpatch.all().order_by("patchlink"):
-            patch += createpatch(i.patchlink)
+        patch = create_patch_set([i.patchlink for i in data.subpatch.all()])
 
     elif len(data.subpatch.all()) == 1 and data.subpatch.all()[0].patchlink != data.patchlink:
         try:
-            patch = createpatch(data.patchlink)
+            patch, _ = createpatch(data.patchlink)
         except:
-            patch = createpatch(data.subpatch.all()[0].patchlink)
+            patch, _ = createpatch(data.subpatch.all()[0].patchlink)
     else:
-        patch = createpatch(data.patchlink)
+        patch, _ = createpatch(data.patchlink)
 
     return HttpResponse(patch, content_type="text/plain; charset=utf-8")
 
