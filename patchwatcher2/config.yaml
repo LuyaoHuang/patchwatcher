@@ -39,3 +39,4 @@ label_blacklist:
     - libvirt-php
     - libvirt-tck
     - python
+    - libvirt-perl
