@@ -63,7 +63,8 @@ def createpatch(htmllink):
             returnstr += n.tail
 
     if "diff --git" not in returnstr:
-        raise Exception("this is not a patch!")
+        #this is not a patch
+        return None, None
 
     return returnstr, subject
 
@@ -90,6 +91,8 @@ def create_patch_set(html_link_list):
     patch_dict = {}
     for html_link in html_link_list:
         tmppatch, tmpsubject = createpatch(html_link)
+        if not tmpsubject:
+            continue
         index, _, _ = _parseSubject(tmpsubject)
         if index == '':
             """ not sure what happened """

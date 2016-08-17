@@ -169,19 +169,25 @@ def updatebuglink(request):
 def creatpatchfile(request, md5code):
     try:
         data = Dataset.objects.get(md5lable=md5code)
+
+        if len(data.subpatch.all()) > 0:
+            #TODO: neet make this check correct
+            tmplist = [data.patchlink]
+            for i in data.subpatch.all():
+                tmplist.append(i.patchlink)
+            patch = create_patch_set(tmplist)
+
+        elif len(data.subpatch.all()) == 1 and data.subpatch.all()[0].patchlink != data.patchlink:
+            tmplist = [data.patchlink, data.subpatch.all()[0].patchlink]
+            patch = create_patch_set(tmplist)
+        else:
+            patch, _ = createpatch(data.patchlink)
+
     except:
         return HttpResponse("Error", content_type="text/plain; charset=utf-8")
 
-    if len(data.subpatch.all()) > 1:
-        patch = create_patch_set([i.patchlink for i in data.subpatch.all()])
-
-    elif len(data.subpatch.all()) == 1 and data.subpatch.all()[0].patchlink != data.patchlink:
-        try:
-            patch, _ = createpatch(data.patchlink)
-        except:
-            patch, _ = createpatch(data.subpatch.all()[0].patchlink)
-    else:
-        patch, _ = createpatch(data.patchlink)
+    if not patch:
+        return HttpResponse("Error", content_type="text/plain; charset=utf-8")
 
     return HttpResponse(patch, content_type="text/plain; charset=utf-8")
 
