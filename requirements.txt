@@ -1,0 +1,5 @@
+django
+numpy
+scipy
+PYyaml
+pika
