@@ -1,7 +1,12 @@
 #configure of patchwatcher
 
+# Only support libvirt right now
+project_name: "libvirt"
+mail_list: "https://www.redhat.com/archives/libvir-list"
+git_repo: "git://libvirt.org/libvirt.git"
+
 mqserver: localhost
-serverip: 10.66.6.19
+serverip: localhost
 
 
 # jenkins Remote Access configure

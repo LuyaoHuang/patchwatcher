@@ -22,9 +22,6 @@ from utils import *
 from patchwork.models import Dataset,currentwork,Patchinfos,CommitData
 from commitwatcher import CommitWatcher
 
-LIBVIR_LIST = "https://www.redhat.com/archives/libvir-list"
-LIBVIRT_REPO = "git://libvirt.org/libvirt.git"
-
 def freshdateinfo(date):
     try:
         currentwork.delete(currentwork.objects.all()[0])
@@ -364,20 +361,20 @@ def triggerCommitJobs(infos, params):
     except:
         logging.error("Fail to trigger a jenkins job")
 
-def watchLibvirtRepo(config, start_date=None, cb_list=None):
+def watchGitRepo(config, start_date=None, cb_list=None):
     """
     cb_list contain several dict which have:
     init bool if need call it during init repo
     func func function will be used
     params dict extra params
     """
-    if not os.access("./libvirt", os.O_RDONLY):
-        logging.info("Cannot find libvirt source code")
-        logging.info("Download libvirt source code")
-        commit_watcher = CommitWatcher('libvirt', repo_url=LIBVIRT_REPO)
+    if not os.access("./%s" % config['project_name'], os.O_RDONLY):
+        logging.info("Cannot find %s source code" % config['project_name'])
+        logging.info("Download %s source code" % config['project_name'])
+        commit_watcher = CommitWatcher(config['project_name'], repo_url=config['git_repo'])
 
     else:
-        commit_watcher = CommitWatcher('libvirt', repo_path='./libvirt')
+        commit_watcher = CommitWatcher(config['project_name'], repo_path='./%s' % config['project_name'])
 
     if len(CommitData.objects.all()) == 0 and start_date:
         end_date = currenttime()
@@ -406,7 +403,7 @@ def patchwatcher():
         startdate = Dataset.objects.order_by("date")[0].date.replace(tzinfo=None)
     else:
         startdate = None
-    for i in ["mqserver", "serverip", "jenkins_job_trigger", "label_blacklist"]:
+    for i in ["mqserver", "serverip", "jenkins_job_trigger", "label_blacklist", "mail_list", "git_repo", "project_name"]:
         if i not in config.keys():
             raise Exception("no %s in config file" % i)
     cb_list = []
@@ -429,18 +426,18 @@ def patchwatcher():
             start = loaddateinfo()
 
         try:
-            groupinfo, patchset, patchinfo, lastmsginfo = getmailwithdate(LIBVIR_LIST, start)
+            groupinfo, patchset, patchinfo, lastmsginfo = getmailwithdate(config['mail_list'], start)
         except Exception, e:
             logging.info("Exception: %s" % e)
             print traceback.format_exc()
-            watchLibvirtRepo(config, startdate, cb_list)
+            watchGitRepo(config, startdate, cb_list)
             time.sleep(600)
             continue
 
         logging.info("update %d patches" % len(groupinfo))
         updatepatchinfo(groupinfo, patchset, patchinfo, newpatchset)
         freshdateinfo(lastmsginfo)
-        watchLibvirtRepo(config, startdate, cb_list)
+        watchGitRepo(config, startdate, cb_list)
         sendpatchinfo(newpatchset, config)
         time.sleep(600)
 
