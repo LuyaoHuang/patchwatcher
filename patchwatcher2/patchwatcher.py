@@ -23,6 +23,65 @@ from patchwork.models import Dataset, currentwork, Patchinfos, CommitData
 from commitwatcher import CommitWatcher
 
 
+class PatchWatcher(object):
+    def __init__(self, config, patch_db_obj, commit_db_obj):
+        self.config = config
+        self.patch_db = patch_db_obj
+        self.commit_db = commit_db_obj
+
+    def send_patch_info(self, newpatchset):
+        configure = self.config
+        skiplist = []
+        for i in newpatchset:
+            subpatch = self.patch_db.get_subpatch(patchlink=i)
+            if len(subpatch) > 1:
+                skiplist.extend([n.patchlink for n in subpatch])
+            elif len(subpatch) == 1 and subpatch[0].patchlink != i:
+                """ so not sure for right now """
+                skiplist.append(i)
+
+        for i in newpatchset:
+            if i in skiplist:
+                continue
+
+            if not configure["serverip"]:
+                hostip = socket.gethostbyname(socket.gethostname())
+            else:
+                hostip = configure["serverip"]
+
+            labellist = []
+            if configure['label_blacklist']:
+                for label in configure['label_blacklist']:
+                    if label in str(self.patch_db.get(patchlink=i).patchlabel):
+                        labellist.append(label)
+
+            if labellist:
+                logging.debug("Skip %s since it has label %s" % (i, ','.join(labellist)))
+                continue
+
+            if valid_patch_set(i):
+                if len(self.commit_db.all()) > 0:
+                    commit = self.commit_db.all()[len(self.commit_db.all()) - 1].commit
+                else:
+                    commit = ''
+
+                tmpdict = {"_patchurl_": "http://%s:8888/patchfile/%s" % (hostip, self.patch_db..get(patchlink=i).md5lable),
+                           "_git_commit_": commit}
+                try:
+                    for job in configure['jenkins_job_trigger'].values():
+                        jenkinsJobTrigger(tmpdict, job)
+                except:
+                    logging.error("Fail to trigger a jenkins job")
+                    return
+
+            tmpdict = {"patchurl": "http://%s:8888/patchfile/%s" % (hostip, self.patch_db.get(patchlink=i).md5lable)}
+            try:
+                pikasendmsg(configure['mqserver'], str(tmpdict), "patchwatcher")
+            except pika.exceptions.AMQPConnectionError:
+                logging.warning("Cannot connect to " + configure['mqserver'])
+                logging.warning("Skip send message")
+
+
 def fresh_date_info(date):
     try:
         currentwork.delete(currentwork.objects.all()[0])
