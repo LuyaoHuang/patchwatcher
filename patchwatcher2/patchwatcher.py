@@ -81,6 +81,57 @@ class PatchWatcher(object):
                 logging.warning("Cannot connect to " + configure['mqserver'])
                 logging.warning("Skip send message")
 
+    def fix_break_patchset(self, patchlink, newpatchset, fullcheck=False):
+        ext = None
+        new = None
+        try:
+            new = self.patch_db.get(patchlink=patchlink)
+            if not fullcheck:
+                return new
+        except Exception:
+            logging.warning("cannot find %s in db, try to fix it" % patchlink)
+
+        strings = getmaildata(patchlink)
+        header = patchlink[:patchlink.find("msg")]
+        info = parsehtmlpatch(strings, urlheader=header)
+        _, cleansubject, labels = parseSubject(info[0])
+
+        if not new:
+            try:
+                ext = self.patch_db.get(name=cleansubject)
+            except:
+                pass
+
+            m = hashlib.md5()
+            m.update(patchlink)
+            new = self.patch_db.create(name=cleansubject, desc=getdescfrommsg(info[3]),
+                                       group="others", patchlink=patchlink,
+                                       author=info[1], date=transtime(info[2]),
+                                       testcase='N/A', testby='N/A', state='ToDo',
+                                       buglink="N/A", md5lable=m.hexdigest(), patchlabel=' '.join(labels))
+            logging.info("create a new obj in db which link is %s" % patchlink)
+            newpatchset.append(patchlink)
+
+        if ext:
+            new.group = ext.group
+            new.save()
+
+        for i in info[4]["Follow-Ups"].keys():
+            sitems = self.fix_break_patchset(info[4]["Follow-Ups"][i], newpatchset)
+            if not sitems:
+                continue
+
+            new.subpatch.add(sitems)
+
+        for i in info[4]["References"].keys():
+            sitems = self.fix_break_patchset(info[4]["References"][i], newpatchset)
+            if not sitems:
+                continue
+
+            new.subpatch.add(sitems)
+
+        return new
+
 
 def fresh_date_info(date):
     try:
