@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.DEBUG,
                     datefmt='%a, %d %b %Y %H:%M:%S',
                     filename='patchwatcher.log')
 
-from splitpatch import splitpatchinternal
+from splitpatch import split_patch_internal
 from utils import *
 from patchwork.models import Dataset, currentwork, Patchinfos, CommitData
 from commitwatcher import CommitWatcher
@@ -335,7 +335,7 @@ def get_mail_with_date(maillist, start, end=None, skipbz=True):
     if lastmsginfo == start:
         return None, None, None, None
 
-    result, patchset = splitpatchinternal(maildict2)
+    result, patchset = split_patch_internal(maildict2)
 
     for n in buglist.keys():
         for i in patchset.keys():
@@ -448,6 +448,7 @@ def patchwatcher():
             continue
 
         if not groupinfo:
+            watch_git_repo(config, startdate, cb_list)
             time.sleep(600)
             continue
 
