@@ -19,25 +19,28 @@ logging.basicConfig(level=logging.DEBUG,
 
 from splitpatch import splitpatchinternal
 from utils import *
-from patchwork.models import Dataset,currentwork,Patchinfos,CommitData
+from patchwork.models import Dataset, currentwork, Patchinfos, CommitData
 from commitwatcher import CommitWatcher
 
-def freshdateinfo(date):
+
+def fresh_date_info(date):
     try:
         currentwork.delete(currentwork.objects.all()[0])
     except IndexError:
         pass
 
-    currentwork.objects.create(date=date[0], msgid = date[1])
+    currentwork.objects.create(date=date[0], msgid=date[1])
 
-def loaddateinfo():
+
+def load_date_info():
     try:
         date = currentwork.objects.all()[0]
     except IndexError:
         return
     return [date.date, date.msgid]
 
-def fixbreakpatchset(patchlink, newpatchset, fullcheck=False):
+
+def fix_break_patchset(patchlink, newpatchset, fullcheck=False):
     ext = None
     new = None
     try:
@@ -61,9 +64,10 @@ def fixbreakpatchset(patchlink, newpatchset, fullcheck=False):
         m = hashlib.md5()
         m.update(patchlink)
         new = Dataset.objects.create(name=cleansubject, desc=getdescfrommsg(info[3]),
-                    group="others", patchlink=patchlink,
-                    author=info[1],date=transtime(info[2]),
-                    testcase='N/A',testby='N/A',state='ToDo',buglink="N/A", md5lable=m.hexdigest(), patchlabel=' '.join(labels))
+                                     group="others", patchlink=patchlink,
+                                     author=info[1], date=transtime(info[2]),
+                                     testcase='N/A', testby='N/A', state='ToDo',
+                                     buglink="N/A", md5lable=m.hexdigest(), patchlabel=' '.join(labels))
         logging.info("create a new obj in db which link is %s" % patchlink)
         newpatchset.append(patchlink)
 
@@ -72,14 +76,14 @@ def fixbreakpatchset(patchlink, newpatchset, fullcheck=False):
         new.save()
 
     for i in info[4]["Follow-Ups"].keys():
-        sitems = fixbreakpatchset(info[4]["Follow-Ups"][i], newpatchset)
+        sitems = fix_break_patchset(info[4]["Follow-Ups"][i], newpatchset)
         if not sitems:
             continue
 
         new.subpatch.add(sitems)
 
     for i in info[4]["References"].keys():
-        sitems = fixbreakpatchset(info[4]["References"][i], newpatchset)
+        sitems = fix_break_patchset(info[4]["References"][i], newpatchset)
         if not sitems:
             continue
 
@@ -87,20 +91,21 @@ def fixbreakpatchset(patchlink, newpatchset, fullcheck=False):
 
     return new
 
-def validPatchSet(patchlink):
+
+def valid_patch_set(patchlink):
     obj = Dataset.objects.get(patchlink=patchlink)
     latest_commits = len(CommitData.objects.all()) - 100
     """ 1st check the same name commit """
     """ TODO: check desc """
     if len(obj.subpatch.all()) > 1:
         for n in obj.subpatch.all():
-            tmplist = CommitData.objects.filter(subject = n.name)
+            tmplist = CommitData.objects.filter(subject=n.name)
             for i in tmplist:
                 if i.id > latest_commits:
                     logging.debug("Skip %s since it have the same name with commit %s" % (n.name, i.commit))
                     return False
     else:
-        tmplist = CommitData.objects.filter(subject = obj.name)
+        tmplist = CommitData.objects.filter(subject=obj.name)
         for i in tmplist:
             if i.id > latest_commits:
                 logging.debug("Skip %s since it have the same name with commit %s" % (obj.name, i.commit))
@@ -108,7 +113,8 @@ def validPatchSet(patchlink):
 
     return True
 
-def sendpatchinfo(newpatchset, configure):
+
+def send_patch_info(newpatchset, configure):
     skiplist = []
     for i in newpatchset:
         obj = Dataset.objects.get(patchlink=i)
@@ -138,14 +144,14 @@ def sendpatchinfo(newpatchset, configure):
             logging.debug("Skip %s since it has label %s" % (i, ','.join(labellist)))
             continue
 
-        if validPatchSet(i):
+        if valid_patch_set(i):
             if len(CommitData.objects.all()) > 0:
                 commit = CommitData.objects.all()[len(CommitData.objects.all()) - 1].commit
             else:
                 commit = ''
 
-            tmpdict = {"_patchurl_" : "http://%s:8888/patchfile/%s" % (hostip, Dataset.objects.get(patchlink=i).md5lable),
-                    "_git_commit_": commit}
+            tmpdict = {"_patchurl_": "http://%s:8888/patchfile/%s" % (hostip, Dataset.objects.get(patchlink=i).md5lable),
+                       "_git_commit_": commit}
             try:
                 for job in configure['jenkins_job_trigger'].values():
                     jenkinsJobTrigger(tmpdict, job)
@@ -153,18 +159,19 @@ def sendpatchinfo(newpatchset, configure):
                 logging.error("Fail to trigger a jenkins job")
                 return
 
-        tmpdict = {"patchurl" : "http://%s:8888/patchfile/%s" % (hostip, Dataset.objects.get(patchlink=i).md5lable)}
+        tmpdict = {"patchurl": "http://%s:8888/patchfile/%s" % (hostip, Dataset.objects.get(patchlink=i).md5lable)}
         try:
             pikasendmsg(configure['mqserver'], str(tmpdict), "patchwatcher")
         except pika.exceptions.AMQPConnectionError:
-            logging.warning("Cannot connect to "+configure['mqserver'])
+            logging.warning("Cannot connect to " + configure['mqserver'])
             logging.warning("Skip send message")
 
-def updatepatchinfo(groupinfo, patchset, patchinfo, newpatchset):
+
+def update_patch_info(groupinfo, patchset, patchinfo, newpatchset):
     tmppatchset = {}
     for n in groupinfo.keys():
         if n not in patchinfo.keys():
-            raise ValueError, 'cannot find % link' % n
+            raise ValueError('cannot find % link' % n)
 
         if int(groupinfo[n][1]) < 4:
             group = 'group%s' % groupinfo[n][1]
@@ -198,9 +205,10 @@ def updatepatchinfo(groupinfo, patchset, patchinfo, newpatchset):
         m = hashlib.md5()
         m.update(patchinfo[n]["patchlink"])
         Dataset.objects.create(name=n, desc=patchinfo[n]["desc"],
-                    group=group, patchlink=patchinfo[n]["patchlink"],
-                    author=patchinfo[n]["author"],date=transtime(patchinfo[n]["date"]),
-                    testcase='N/A',testby='N/A',state='ToDo',buglink=buglink, md5lable=m.hexdigest(), patchlabel=' '.join(patchinfo[n]["labels"]))
+                               group=group, patchlink=patchinfo[n]["patchlink"],
+                               author=patchinfo[n]["author"], date=transtime(patchinfo[n]["date"]),
+                               testcase='N/A', testby='N/A', state='ToDo', buglink=buglink,
+                               md5lable=m.hexdigest(), patchlabel=' '.join(patchinfo[n]["labels"]))
         newpatchset.append(patchinfo[n]["patchlink"])
 
     for n in tmppatchset.keys():
@@ -218,26 +226,27 @@ def updatepatchinfo(groupinfo, patchset, patchinfo, newpatchset):
             continue
 
         for i in subpatch["Follow-Ups"].keys():
-            if checkpatchset == True and i not in patchset[name]:
+            if checkpatchset is True and i not in patchset[name]:
                 logging.warning("cannot find %s in patchset for %s" % (i, name))
 
-            sitems = fixbreakpatchset(subpatch["Follow-Ups"][i], newpatchset)
+            sitems = fix_break_patchset(subpatch["Follow-Ups"][i], newpatchset)
             if not sitems:
                 continue
 
             item.subpatch.add(sitems)
 
         for i in subpatch["References"].keys():
-            if checkpatchset == True and i not in patchset[name]:
+            if checkpatchset is True and i not in patchset[name]:
                 logging.warning("cannot find %s in patchset for %s" % (i, name))
 
-            sitems = fixbreakpatchset(subpatch["References"][i], newpatchset)
+            sitems = fix_break_patchset(subpatch["References"][i], newpatchset)
             if not sitems:
                 continue
 
             item.subpatch.add(sitems)
 
-def parsedatemail(maillist, startdate, enddate, startmsgid):
+
+def parse_date_mail(maillist, startdate, enddate, startmsgid):
     retdict = {}
     startdatelist = startdate.split('-')
     enddatelist = enddate.split('-')
@@ -282,14 +291,15 @@ def parsedatemail(maillist, startdate, enddate, startmsgid):
 
     return retdict
 
-def getmailwithdate(maillist, start, end=None, skipbz=True):
+
+def get_mail_with_date(maillist, start, end=None, skipbz=True):
     if not end:
         """ get current date """
         new_end = time.strftime("%Y-%m")
     else:
         new_end = end
 
-    maildict = parsedatemail(maillist, start[0], new_end, start[1])
+    maildict = parse_date_mail(maillist, start[0], new_end, start[1])
     maildict2 = {}
     buglist = {}
     patchinfo = {}
@@ -303,7 +313,7 @@ def getmailwithdate(maillist, start, end=None, skipbz=True):
                 try:
                     info = parsehtmlpatch(strings, hreflist, genurlofpatchhead(maillist, year, month))
                 except StructError:
-                    logging.error("Cannot parse "+link)
+                    logging.error("Cannot parse " + link)
                     continue
 
                 _, cleansubject, labels = parseSubject(info[0])
@@ -314,16 +324,16 @@ def getmailwithdate(maillist, start, end=None, skipbz=True):
                         buglist[cleansubject] = hreflist
 
                 maildict2[cleansubject] = info[3]
-                patchinfo[cleansubject] = { "patchlink": link,
-                                            "desc": getdescfrommsg(info[3]),
-                                            "author": info[1],
-                                            "date": info[2],
-                                            "patchset": info[4],
-                                            "labels": labels}
+                patchinfo[cleansubject] = {"patchlink": link,
+                                           "desc": getdescfrommsg(info[3]),
+                                           "author": info[1],
+                                           "date": info[2],
+                                           "patchset": info[4],
+                                           "labels": labels}
                 lastmsginfo = ['%s-%s' % (year, month), str(msgid)]
 
     if lastmsginfo == start:
-        return
+        return None, None, None, None
 
     result, patchset = splitpatchinternal(maildict2)
 
@@ -339,29 +349,32 @@ def getmailwithdate(maillist, start, end=None, skipbz=True):
 
     return result, patchset, patchinfo, lastmsginfo
 
-def updateCommitData(infos, params):
-    CommitData.objects.create(commit=infos['commit'],
-            subject=infos['subject'],
-            author=infos['author'],
-            date=transtime(infos['date']),
-            desc=infos['desc'])
 
-    tmplist = Dataset.objects.filter(name = infos['subject'])
+def update_commit_data(infos, params):
+    CommitData.objects.create(commit=infos['commit'],
+                              subject=infos['subject'],
+                              author=infos['author'],
+                              date=transtime(infos['date']),
+                              desc=infos['desc'])
+
+    tmplist = Dataset.objects.filter(name=infos['subject'])
     for tmp in tmplist:
         tmp.pushed = "Yes"
         tmp.save()
         logging.debug("update %s pushed status to yes" % tmp.name)
 
-def triggerCommitJobs(infos, params):
+
+def trigger_commit_jobs(infos, params):
     job_info = params['job_info']
-    tmpdict = {"_patchurl_" : '',
+    tmpdict = {"_patchurl_": '',
                "_git_commit_": infos['commit']}
     try:
         jenkinsJobTrigger(tmpdict, job_info)
     except:
         logging.error("Fail to trigger a jenkins job")
 
-def watchGitRepo(config, start_date=None, cb_list=None):
+
+def watch_git_repo(config, start_date=None, cb_list=None):
     """
     cb_list contain several dict which have:
     init bool if need call it during init repo
@@ -395,6 +408,7 @@ def watchGitRepo(config, start_date=None, cb_list=None):
         for cb_dict in cb_list:
             cb_dict['func'](infos, cb_dict['params'])
 
+
 def patchwatcher():
     start = ['2016-6', '01005']
     count = 0
@@ -407,39 +421,43 @@ def patchwatcher():
         if i not in config.keys():
             raise Exception("no %s in config file" % i)
     cb_list = []
-    cb_list.append({'init': False ,
-                    'func': triggerCommitJobs,
-                    'params': {'job_info':config['jenkins_job_trigger']['unit_test_job']}})
+    cb_list.append({'init': False,
+                    'func': trigger_commit_jobs,
+                    'params': {'job_info': config['jenkins_job_trigger']['unit_test_job']}})
 
-    cb_list.append({'init': True ,
-                    'func': updateCommitData,
+    cb_list.append({'init': True,
+                    'func': update_commit_data,
                     'params': {}})
     while 1:
         newpatchset = []
 
         count += 1
-        if count%6 == 0:
+        if count % 6 == 0:
             logging.info("backups db")
             bakdb()
 
-        if loaddateinfo():
-            start = loaddateinfo()
+        if load_date_info():
+            start = load_date_info()
 
         try:
-            groupinfo, patchset, patchinfo, lastmsginfo = getmailwithdate(config['mail_list'], start)
+            groupinfo, patchset, patchinfo, lastmsginfo = get_mail_with_date(config['mail_list'], start)
         except Exception, e:
-            logging.info("Exception: %s" % e)
-            print traceback.format_exc()
-            watchGitRepo(config, startdate, cb_list)
+            logging.warning("Hit Exception: %s" % e)
+            watch_git_repo(config, startdate, cb_list)
+            time.sleep(600)
+            continue
+
+        if not groupinfo:
             time.sleep(600)
             continue
 
         logging.info("update %d patches" % len(groupinfo))
-        updatepatchinfo(groupinfo, patchset, patchinfo, newpatchset)
-        freshdateinfo(lastmsginfo)
-        watchGitRepo(config, startdate, cb_list)
-        sendpatchinfo(newpatchset, config)
+        update_patch_info(groupinfo, patchset, patchinfo, newpatchset)
+        fresh_date_info(lastmsginfo)
+        watch_git_repo(config, startdate, cb_list)
+        send_patch_info(newpatchset, config)
         time.sleep(600)
+
 
 if __name__ == '__main__':
     patchwatcher()
