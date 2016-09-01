@@ -75,6 +75,8 @@ def currenttime():
     return parser.parse(time.ctime()).replace(tzinfo=None)
 
 def bakdb():
+    if not os.path.exists('./dbbak/'):
+        return
     cmd = "cp -f db.sqlite3 ./dbbak/"
     output = subprocess.check_output(cmd.split(),stderr=STDOUT)
     logging.debug("run cmd: %s" % cmd)
@@ -117,7 +119,11 @@ def genurlofpatchhead(maillist, year, month):
     return "%s/%s-%s/" % (maillist, year, MONTH[str(month)])
 
 def getmaildata(link, times=None):
-    strings = urllib2.urlopen(link).read().decode("utf-8")
+    try:
+        strings = urllib2.urlopen(link).read().decode("utf-8")
+    except:
+        logging.warning("Cannot open link: %s" % link)
+        return
     return strings
 
 def parsehtmlpatch(htmlstr, link=None, urlheader=None):

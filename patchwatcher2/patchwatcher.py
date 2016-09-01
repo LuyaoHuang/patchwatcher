@@ -375,6 +375,8 @@ def parse_date_mail(maillist, startdate, enddate, startmsgid):
 
             link = genurloflist(maillist, '%s-%s' % (startdatelist[0], startmonth))
             strings = getmaildata(link)
+            if not strings:
+                break
             xml = etree.HTML(strings)
             ul = xml.xpath('/html/body/ul')
             for n in ul[1:]:
